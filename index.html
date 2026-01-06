@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Lost Down | Som que vem das ruas, marés e corações</title>
+    <meta name="description" content="Produtora e agenciadora de artistas da música periférica de São Paulo, região do ABC. RAP, Trap e Funk.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --white: #ffffff;
+            --gray: #888888;
+            --gradient-1: linear-gradient(135deg, #c4b5fd, #a5f3fc, #fcd5ce, #c4b5fd);
+            --gradient-2: linear-gradient(45deg, #a5f3fc, #d8b4fe, #fcd5ce);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.5rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-text {
+            font-weight: 900;
+            font-size: 0.9rem;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-badge {
+            width: 40px;
+            height: 40px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: var(--black);
+            font-size: 0.7rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.7;
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: var(--white);
+            transition: 0.3s;
+        }
+
+        /* Sections */
+        section {
+            min-height: 100vh;
+            padding: 8rem 4rem 4rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        h1, h2 {
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+        }
+
+        h2 {
+            font-size: clamp(2.5rem, 6vw, 5rem);
+        }
+
+        /* 3D Holographic Shapes */
+        .shape {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1;
+            margin-left: auto;
+        }
+
+        .shape-blob {
+            width: 100%;
+            height: 100%;
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            background: linear-gradient(135deg, 
+                #fcd5ce 0%, 
+                #d8b4fe 25%, 
+                #a5f3fc 50%, 
+                #c4b5fd 75%,
+                #fcd5ce 100%);
+            background-size: 400% 400%;
+            animation: gradient-shift 8s ease infinite, morph 12s ease-in-out infinite;
+            filter: blur(0px);
+            box-shadow: 
+                inset 0 0 60px rgba(255,255,255,0.3),
+                0 0 80px rgba(168, 162, 232, 0.3);
+        }
+
+        .shape-cube {
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            background: linear-gradient(135deg, 
+                #a5f3fc 0%, 
+                #d8b4fe 50%, 
+                #fcd5ce 100%);
+            background-size: 200% 200%;
+            animation: gradient-shift 6s ease infinite;
+            transform: perspective(800px) rotateX(-10deg) rotateY(20deg);
+            border-radius: 20px;
+            box-shadow: 
+                inset 0 0 40px rgba(255,255,255,0.2),
+                20px 20px 60px rgba(168, 85, 247, 0.2),
+                -20px -20px 60px rgba(165, 243, 252, 0.2);
+        }
+
+        .shape-gem {
+            width: 85%;
+            height: 85%;
+            margin: 7.5%;
+            background: linear-gradient(135deg, 
+                #c4b5fd 0%, 
+                #fcd5ce 30%,
+                #a5f3fc 60%, 
+                #d8b4fe 100%);
+            background-size: 300% 300%;
+            animation: gradient-shift 7s ease infinite;
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+            box-shadow: 
+                inset 0 0 50px rgba(255,255,255,0.3);
+        }
+
+        .shape-star {
+            width: 90%;
+            height: 90%;
+            margin: 5%;
+            background: linear-gradient(180deg, 
+                #fcd5ce 0%, 
+                #d8b4fe 40%,
+                #a5f3fc 100%);
+            background-size: 200% 200%;
+            animation: gradient-shift 5s ease infinite;
+            clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
+            box-shadow: 
+                inset 0 0 60px rgba(255,255,255,0.4);
+        }
+
+        .shape-cross {
+            width: 70%;
+            height: 70%;
+            margin: 15%;
+            background: linear-gradient(135deg, 
+                #d8b4fe 0%, 
+                #a5f3fc 50%,
+                #fcd5ce 100%);
+            background-size: 200% 200%;
+            animation: gradient-shift 6s ease infinite;
+            clip-path: polygon(35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%);
+            transform: perspective(600px) rotateX(10deg) rotateY(-15deg);
+            box-shadow: 
+                inset 0 0 50px rgba(255,255,255,0.3);
+        }
+
+        .shape-heart {
+            width: 90%;
+            height: 85%;
+            margin: 5% 5% 10%;
+            background: linear-gradient(135deg, 
+                #a5f3fc 0%,
+                #fcd5ce 30%, 
+                #d8b4fe 70%,
+                #c4b5fd 100%);
+            background-size: 300% 300%;
+            animation: gradient-shift 7s ease infinite;
+            clip-path: path('M 250 450 C 100 350 0 250 0 150 C 0 50 75 0 150 0 C 200 0 250 50 250 100 C 250 50 300 0 350 0 C 425 0 500 50 500 150 C 500 250 400 350 250 450 Z');
+            transform: scale(0.9);
+            border-radius: 0;
+        }
+
+        /* Heart needs special handling */
+        .shape-heart-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape-heart-inner {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                #a5f3fc 0%,
+                #fcd5ce 30%, 
+                #d8b4fe 70%,
+                #c4b5fd 100%);
+            background-size: 300% 300%;
+            animation: gradient-shift 7s ease infinite;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 88C25 70 5 55 5 35C5 20 17 8 32 8C40 8 48 12 50 20C52 12 60 8 68 8C83 8 95 20 95 35C95 55 75 70 50 88Z'/%3E%3C/svg%3E");
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 88C25 70 5 55 5 35C5 20 17 8 32 8C40 8 48 12 50 20C52 12 60 8 68 8C83 8 95 20 95 35C95 55 75 70 50 88Z'/%3E%3C/svg%3E");
+            -webkit-mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            box-shadow: 
+                inset 0 0 80px rgba(255,255,255,0.3);
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes morph {
+            0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+            50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; }
+            75% { border-radius: 60% 40% 60% 30% / 70% 30% 50% 60%; }
+        }
+
+        /* Sobre Section */
+        .sobre-text {
+            max-width: 650px;
+        }
+
+        .sobre-text p {
+            margin-top: 2rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: rgba(255,255,255,0.85);
+            text-align: justify;
+        }
+
+        /* Artistas Section */
+        .artistas-grid {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .artista-card {
+            width: 180px;
+            height: 180px;
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .artista-card:hover {
+            transform: scale(1.05);
+        }
+
+        .artista-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artista-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* Contato Section */
+        .contato-form {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 400px;
+        }
+
+        .contato-form input,
+        .contato-form textarea {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 1rem;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        .contato-form input:focus,
+        .contato-form textarea:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .contato-form textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .contato-form button {
+            background: var(--white);
+            color: var(--black);
+            border: none;
+            padding: 1rem 2rem;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.3s, transform 0.3s;
+            border-radius: 4px;
+        }
+
+        .contato-form button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Social Links */
+        .social-links {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .social-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .social-links a:hover {
+            opacity: 1;
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem 4rem;
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            nav {
+                padding: 1rem 2rem;
+            }
+
+            section {
+                padding: 6rem 2rem 3rem;
+            }
+
+            .section-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .shape {
+                max-width: 350px;
+                margin: 0 auto;
+            }
+
+            .text-content {
+                order: 1;
+            }
+
+            .shape-container {
+                order: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--black);
+                flex-direction: column;
+                padding: 2rem;
+                gap: 1.5rem;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+
+            .artistas-grid {
+                flex-wrap: wrap;
+            }
+
+            .artista-card {
+                width: 140px;
+                height: 140px;
+            }
+        }
+
+        /* Smooth scroll offset for fixed nav */
+        section[id] {
+            scroll-margin-top: 80px;
+        }
+
+        /* Animation on scroll */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <div class="logo-text">CITY<br>LOST<br>DOWN</div>
+            <div class="logo-badge">M</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home">HOME</a></li>
+            <li><a href="#sobre">SOBRE</a></li>
+            <li><a href="#artistas">ARTISTAS</a></li>
+            <li><a href="#eventos">EVENTOS</a></li>
+            <li><a href="#tecnica">TÉCNICA</a></li>
+            <li><a href="#contato">CONTATO</a></li>
+        </ul>
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home">
+        <div class="section-content">
+            <div class="text-content fade-in">
+                <h1>Som que vem das<br>ruas<br>marés<br>e corações.</h1>
+            </div>
+            <div class="shape-container fade-in">
+                <div class="shape">
+                    <div class="shape-blob"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sobre Section -->
+    <section id="sobre">
+        <div class="section-content">
+            <div class="text-content sobre-text fade-in">
+                <h2>Quem somos nós?</h2>
+                <p>City Lost Down é uma concepção que culmina numa produtora e agenciadora de artistas e labels da música periférica de São Paulo, principalmente da região do ABC. Acreditamos na potência que a organização e profissionalização dos cenários artísticos locais e regionais pode proporcionar aos agentes que dele fazem parte.</p>
+                <p>Nosso principal objetivo é a expansão. Em todos os sentidos. Da música aos eventos, do audiovisual à comunicação, trabalhamos para que os artistas passem a entregar novas experiências aos seus fãs e ouvintes, com profissionais humanos, capacitados e comprometidos com o seu projeto.</p>
+                <p>Junto à MUSINDEP Studios, já lançaram mais de 120 músicas, colaborando com mais de 50 artistas independentes, além de oferecer suporte técnico nos palcos e backstages para artistas como Brocasito, 2:22, Menó Felps & Caio Shock, e eventos como Botânico ABC, Galpão Quina e LayBack, caminhando por gerações desde o bom e velho RAP até o Trap e o Funk.</p>
+            </div>
+            <div class="shape-container fade-in">
+                <div class="shape">
+                    <div class="shape-cube"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Artistas Section -->
+    <section id="artistas">
+        <div class="section-content">
+            <div class="text-content fade-in">
+                <h2>Nossos artistas</h2>
+                <div class="artistas-grid">
+                    <!-- Substitua os placeholders pelas imagens dos artistas -->
+                    <div class="artista-card">
+                        <div class="artista-placeholder">Imagem do Artista 1</div>
+                    </div>
+                    <div class="artista-card">
+                        <div class="artista-placeholder">Imagem do Artista 2</div>
+                    </div>
+                    <div class="artista-card">
+                        <div class="artista-placeholder">Tequila Sunrise</div>
+                    </div>
+                </div>
+            </div>
+            <div class="shape-container fade-in">
+                <div class="shape">
+                    <div class="shape-gem"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Eventos Section -->
+    <section id="eventos">
+        <div class="section-content">
+            <div class="text-content fade-in">
+                <h2>Nossos eventos</h2>
+                <p style="margin-top: 1.5rem; opacity: 0.8;">Em breve, novidades por aqui.</p>
+            </div>
+            <div class="shape-container fade-in">
+                <div class="shape">
+                    <div class="shape-star"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Técnica Section -->
+    <section id="tecnica">
+        <div class="section-content">
+            <div class="text-content fade-in">
+                <h2>Técnica em shows e eventos</h2>
+                <p style="margin-top: 1.5rem; opacity: 0.8;">Suporte técnico profissional para palcos e backstages.</p>
+            </div>
+            <div class="shape-container fade-in">
+                <div class="shape">
+                    <div class="shape-cross"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contato Section -->
+    <section id="contato">
+        <div class="section-content">
+            <div class="text-content fade-in">
+                <h2>Fala que a gente te escuta!</h2>
+                <form class="contato-form" onsubmit="handleSubmit(event)">
+                    <input type="text" name="nome" placeholder="Seu nome" required>
+                    <input type="email" name="email" placeholder="Seu email" required>
+                    <textarea name="mensagem" placeholder="Sua mensagem" required></textarea>
+                    <button type="submit">Enviar</button>
+                </form>
+                <div class="social-links">
+                    <a href="#" target="_blank">Instagram</a>
+                    <a href="#" target="_blank">YouTube</a>
+                    <a href="#" target="_blank">Spotify</a>
+                </div>
+            </div>
+            <div class="shape-container fade-in">
+                <div class="shape">
+                    <div class="shape-heart-container">
+                        <div class="shape-heart-inner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 City Lost Down. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        function toggleMenu() {
+            document.querySelector('.nav-links').classList.toggle('active');
+        }
+
+        // Close menu when clicking a link
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelector('.nav-links').classList.remove('active');
+            });
+        });
+
+        // Form submission
+        function handleSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const nome = formData.get('nome');
+            alert(`Obrigado pelo contato, ${nome}! Responderemos em breve.`);
+            e.target.reset();
+        }
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
