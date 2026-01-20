@@ -458,7 +458,14 @@
         function carregarDados() {
             const saved = localStorage.getItem('financeData');
             if (saved) {
-                estado = JSON.parse(saved);
+                try {
+                    estado = JSON.parse(saved);
+                    console.log('Dados carregados:', estado); // Debug
+                } catch (e) {
+                    console.error('Erro ao carregar dados:', e);
+                }
+            } else {
+                console.log('Nenhum dado salvo encontrado, usando estado inicial'); // Debug
             }
             renderizar();
         }
@@ -643,6 +650,8 @@
             const tipo = document.getElementById('tipoReceita').value;
             const valor = parseFloat(document.getElementById('valorReceita').value);
             
+            console.log('Adicionando receita:', tipo, valor); // Debug
+            
             if (isNaN(valor) || valor <= 0) {
                 alert('❌ Valor inválido!');
                 return;
@@ -662,6 +671,8 @@
             document.getElementById('valorReceita').value = '';
             salvarDados();
             renderizar();
+            
+            console.log('Estado após adicionar:', estado); // Debug
         }
         
         // Guardar no colchão
@@ -820,10 +831,14 @@ ${saldoPositivo ? '🎉 Parabéns! Você teve saldo positivo este mês!' : '⚠�
         
         // Renderizar tudo
         function renderizar() {
+            console.log('Renderizando com estado:', estado); // Debug
+            
             const disponivel = estado.saldoDia20 + estado.saldoDia5 + estado.emprestimo + estado.rendaExtra;
             const aPagar = estado.contas.filter(c => !c.paid).reduce((sum, c) => sum + c.value, 0);
             const dividasTotal = estado.dividas.filter(d => !d.paid).reduce((sum, d) => sum + d.value, 0);
             const gastosTotal = estado.gastos.reduce((sum, g) => sum + g.value, 0);
+            
+            console.log('Valores calculados:', { disponivel, aPagar, dividasTotal, gastosTotal }); // Debug
             
             // Cards
             document.getElementById('disponivel').textContent = `R$ ${disponivel.toFixed(2)}`;
