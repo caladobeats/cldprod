@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESTE - Controle Financeiro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        h1 {
+            color: #333;
+        }
+        .valor {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 TESTE - Controle Financeiro</h1>
+    
+    <div class="card">
+        <h2>💰 Saldo Disponível</h2>
+        <div class="valor" id="saldo">R$ 0,00</div>
+    </div>
+    
+    <div class="card">
+        <h2>➕ Adicionar Dinheiro</h2>
+        <input type="number" id="valor" placeholder="Digite o valor (ex: 100)">
+        <button onclick="adicionar()">Adicionar R$</button>
+    </div>
+    
+    <div class="card">
+        <h2>📋 Histórico</h2>
+        <div id="historico"></div>
+    </div>
+    
+    <div class="card" style="background: #fff3cd;">
+        <h3>🔧 Debug</h3>
+        <button onclick="verEstado()">Ver Estado Completo</button>
+        <button onclick="limparTudo()" style="background: #dc3545;">Limpar Tudo</button>
+        <pre id="debug" style="background: #f8f9fa; padding: 10px; margin-top: 10px; font-size: 12px;"></pre>
+    </div>
+
+    <script>
+        console.log('Script carregando...');
+        
+        let saldo = 0;
+        let historico = [];
+        
+        // Carrega dados salvos
+        function carregar() {
+            const saved = localStorage.getItem('testeFinance');
+            if (saved) {
+                const dados = JSON.parse(saved);
+                saldo = dados.saldo;
+                historico = dados.historico;
+                console.log('Dados carregados:', dados);
+            } else {
+                console.log('Nenhum dado salvo');
+            }
+            atualizar();
+        }
+        
+        // Salva dados
+        function salvar() {
+            const dados = { saldo, historico };
+            localStorage.setItem('testeFinance', JSON.stringify(dados));
+            console.log('Dados salvos:', dados);
+        }
+        
+        // Adiciona dinheiro
+        function adicionar() {
+            const valor = parseFloat(document.getElementById('valor').value);
+            
+            console.log('Tentando adicionar:', valor);
+            
+            if (isNaN(valor) || valor <= 0) {
+                alert('Valor inválido!');
+                return;
+            }
+            
+            saldo += valor;
+            historico.push({
+                data: new Date().toLocaleString('pt-BR'),
+                valor: valor,
+                tipo: 'entrada'
+            });
+            
+            document.getElementById('valor').value = '';
+            salvar();
+            atualizar();
+            
+            console.log('Adicionado! Novo saldo:', saldo);
+        }
+        
+        // Atualiza tela
+        function atualizar() {
+            document.getElementById('saldo').textContent = `R$ ${saldo.toFixed(2)}`;
+            
+            if (historico.length > 0) {
+                document.getElementById('historico').innerHTML = historico
+                    .slice()
+                    .reverse()
+                    .map(h => `
+                        <div style="padding: 10px; margin: 5px 0; background: #e8f5e9; border-radius: 5px;">
+                            <strong>+ R$ ${h.valor.toFixed(2)}</strong><br>
+                            <small>${h.data}</small>
+                        </div>
+                    `).join('');
+            } else {
+                document.getElementById('historico').innerHTML = '<p style="color: #999;">Nenhuma transação ainda</p>';
+            }
+            
+            console.log('Tela atualizada. Saldo atual:', saldo);
+        }
+        
+        // Ver estado completo
+        function verEstado() {
+            const estado = {
+                saldo: saldo,
+                historico: historico,
+                localStorage: localStorage.getItem('testeFinance')
+            };
+            document.getElementById('debug').textContent = JSON.stringify(estado, null, 2);
+            console.log('Estado completo:', estado);
+        }
+        
+        // Limpar tudo
+        function limparTudo() {
+            if (confirm('Tem certeza que deseja limpar TUDO?')) {
+                localStorage.removeItem('testeFinance');
+                saldo = 0;
+                historico = [];
+                atualizar();
+                document.getElementById('debug').textContent = '';
+                console.log('Tudo limpo!');
+            }
+        }
+        
+        // Inicializa
+        console.log('Inicializando...');
+        carregar();
+        console.log('Sistema pronto!');
+        
+        // Permite Enter para adicionar
+        document.getElementById('valor').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') adicionar();
+        });
+    </script>
+</body>
+</html>
