@@ -193,7 +193,7 @@
         }
         
         .sobra-bar {
-            background: linear-gradient(to top, #27ae60, #229954) !important;
+            background: linear-gradient(to top, #3498db, #2980b9) !important;
         }
         
         .grid-2 {
@@ -276,7 +276,7 @@
         
         <!-- Gráfico Visual -->
         <div class="section">
-            <h2>📊 Distribuição por Pagamento</h2>
+            <h2>📊 Comparação de Contas</h2>
             <div class="chart">
                 <div class="bar">
                     <div class="bar-fill" id="barDia20" style="height: 0px;"></div>
@@ -285,7 +285,7 @@
                 </div>
                 <div class="bar">
                     <div class="bar-fill sobra-bar" id="barSobra20" style="height: 0px;"></div>
-                    <div class="bar-label">Sobra</div>
+                    <div class="bar-label">Dia 5</div>
                     <div id="valorSobra20">R$ 0,00</div>
                 </div>
             </div>
@@ -370,7 +370,7 @@
             });
         }
         
-        // Toggle conta paga
+        // Toggle conta paga - CORRIGIDO
         function toggleConta(id) {
             const conta = estado.contas.find(c => c.id === id);
             if (!conta) return;
@@ -378,10 +378,48 @@
             conta.paid = !conta.paid;
             
             if (conta.paid) {
-                if (conta.payFrom === 'dia20') estado.saldoDia20 -= conta.value;
-                else estado.saldoDia5 -= conta.value;
+                // Pagando a conta - desconta do disponível
+                let valorRestante = conta.value;
+                
+                // Tenta pagar com empréstimo primeiro
+                if (estado.emprestimo >= valorRestante) {
+                    estado.emprestimo -= valorRestante;
+                    valorRestante = 0;
+                } else if (estado.emprestimo > 0) {
+                    valorRestante -= estado.emprestimo;
+                    estado.emprestimo = 0;
+                }
+                
+                // Depois com salário dia 20
+                if (valorRestante > 0 && estado.saldoDia20 >= valorRestante) {
+                    estado.saldoDia20 -= valorRestante;
+                    valorRestante = 0;
+                } else if (valorRestante > 0 && estado.saldoDia20 > 0) {
+                    valorRestante -= estado.saldoDia20;
+                    estado.saldoDia20 = 0;
+                }
+                
+                // Depois com salário dia 5
+                if (valorRestante > 0 && estado.saldoDia5 >= valorRestante) {
+                    estado.saldoDia5 -= valorRestante;
+                    valorRestante = 0;
+                } else if (valorRestante > 0 && estado.saldoDia5 > 0) {
+                    valorRestante -= estado.saldoDia5;
+                    estado.saldoDia5 = 0;
+                }
+                
+                // Por último, renda extra
+                if (valorRestante > 0 && estado.rendaExtra >= valorRestante) {
+                    estado.rendaExtra -= valorRestante;
+                    valorRestante = 0;
+                } else if (valorRestante > 0 && estado.rendaExtra > 0) {
+                    valorRestante -= estado.rendaExtra;
+                    estado.rendaExtra = 0;
+                }
+                
                 addHistorico(`✅ Pagou ${conta.name}`, conta.value, 'expense');
             } else {
+                // Desmarcando como paga - devolve para o saldo apropriado
                 if (conta.payFrom === 'dia20') estado.saldoDia20 += conta.value;
                 else estado.saldoDia5 += conta.value;
                 addHistorico(`↩️ Desmarcou ${conta.name}`, conta.value, 'income');
@@ -499,15 +537,17 @@
             document.getElementById('dividas').textContent = `R$ ${dividasTotal.toFixed(2)}`;
             document.getElementById('dispColchao').textContent = `R$ ${estado.rendaExtra.toFixed(2)}`;
             
-            // Gráfico
+            // Gráfico - CORRIGIDO
             const contasDia20 = estado.contas.filter(c => c.payFrom === 'dia20' && !c.paid).reduce((sum, c) => sum + c.value, 0);
-            const sobraDia20 = 1000 - contasDia20;
+            const contasDia5 = estado.contas.filter(c => c.payFrom === 'dia5' && !c.paid).reduce((sum, c) => sum + c.value, 0);
             
             const maxHeight = 150;
-            document.getElementById('barDia20').style.height = `${(contasDia20 / 1000) * maxHeight}px`;
-            document.getElementById('barSobra20').style.height = `${(sobraDia20 / 1000) * maxHeight}px`;
-            document.getElementById('valorDia20').textContent = `R$ ${contasDia20.toFixed(2)}`;
-            document.getElementById('valorSobra20').textContent = `R$ ${sobraDia20.toFixed(2)}`;
+            const maxValue = Math.max(contasDia20, contasDia5, 100);
+            
+            document.getElementById('barDia20').style.height = `${(contasDia20 / maxValue) * maxHeight}px`;
+            document.getElementById('barSobra20').style.height = `${(contasDia5 / maxValue) * maxHeight}px`;
+            document.getElementById('valorDia20').textContent = `Contas: R$ ${contasDia20.toFixed(2)}`;
+            document.getElementById('valorSobra20').textContent = `Contas: R$ ${contasDia5.toFixed(2)}`;
             
             // Contas Dia 20
             document.getElementById('contasDia20').innerHTML = estado.contas
