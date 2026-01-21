@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 Controle Financeiro Pessoal</title>
+    <title>💰 Controle Financeiro</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS para Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -48,8 +57,30 @@
         .subtitle {
             color: rgba(255,255,255,0.9);
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             font-size: 1.1rem;
+        }
+        
+        .sync-status {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .sync-status.connected {
+            background: rgba(40, 167, 69, 0.3);
+        }
+        
+        .sync-status.disconnected {
+            background: rgba(220, 53, 69, 0.3);
         }
         
         /* Cards de Resumo */
@@ -443,6 +474,12 @@
             color: #721c24;
         }
         
+        .alert-info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+        
         .alert-icon {
             font-size: 1.5rem;
         }
@@ -484,24 +521,42 @@
             opacity: 0.9;
         }
         
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* Responsividade */
         @media (max-width: 768px) {
             h1 {
                 font-size: 2rem;
             }
-            
             .summary-cards {
                 grid-template-columns: 1fr;
             }
-            
             .actions-grid {
                 grid-template-columns: 1fr;
             }
-            
             .grid-2 {
                 grid-template-columns: 1fr;
             }
-            
             .card-value {
                 font-size: 1.5rem;
             }
@@ -509,9 +564,21 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Loading inicial -->
+    <div id="loadingScreen" class="loading">
+        <div class="spinner"></div>
+        <p>Carregando dados...</p>
+    </div>
+    
+    <div id="mainApp" class="container hidden">
         <h1>💰 Controle Financeiro</h1>
-        <p class="subtitle">Gerencie suas finanças de forma simples e eficiente</p>
+        <p class="subtitle">Gerencie suas finanças com sincronização na nuvem</p>
+        
+        <!-- Status de Sincronização -->
+        <div id="syncStatus" class="sync-status disconnected">
+            <span id="syncIcon">⚠️</span>
+            <span id="syncText">Configuração necessária</span>
+        </div>
         
         <!-- Alertas de Vencimento -->
         <div id="alertsContainer"></div>
@@ -542,7 +609,7 @@
                     <span class="card-title">Salário Dia 5</span>
                 </div>
                 <div class="card-value" style="color: var(--secondary);" id="saldoDia5">R$ 0,00</div>
-                <div class="card-subtitle">Próximo: 05/03</div>
+                <div class="card-subtitle">Próximo: 05/02</div>
             </div>
             
             <div class="card">
@@ -725,19 +792,80 @@
                 <div class="section-header">
                     <h2 class="section-title">⚙️ Configurações</h2>
                 </div>
+                <button class="btn-secondary mb-2" onclick="abrirModalConfigFirebase()">
+                    🔧 Configurar Firebase
+                </button>
                 <button class="btn-secondary mb-2" onclick="backupDados()">
-                    💾 Backup dos Dados
+                    💾 Backup Local
                 </button>
                 <button class="btn-danger" onclick="resetarDados()">
-                    🗑️ Limpar Todos os Dados
+                    🗑️ Limpar Dados
                 </button>
             </div>
         </div>
         
         <!-- Footer -->
         <div class="footer">
-            <p class="footer-text">✅ Dados salvos automaticamente no navegador</p>
-            <p class="footer-text mt-1">💡 Desenvolvido para gerenciamento financeiro pessoal</p>
+            <p class="footer-text">☁️ Dados sincronizados automaticamente na nuvem</p>
+            <p class="footer-text mt-1">💡 Acesse de qualquer dispositivo!</p>
+        </div>
+    </div>
+    
+    <!-- Modal Config Firebase -->
+    <div id="modalConfigFirebase" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔧 Configurar Firebase</h3>
+                <button class="close-modal" onclick="fecharModal('modalConfigFirebase')">&times;</button>
+            </div>
+            
+            <div class="alert alert-info">
+                <span class="alert-icon">ℹ️</span>
+                <div>
+                    <strong>Configure uma vez e sincronize para sempre!</strong>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                        Após configurar, seus dados serão sincronizados automaticamente entre todos os seus dispositivos.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>API Key</label>
+                <input type="text" id="firebaseApiKey" placeholder="Cole sua API Key aqui">
+            </div>
+            <div class="form-group">
+                <label>Auth Domain</label>
+                <input type="text" id="firebaseAuthDomain" placeholder="seu-projeto.firebaseapp.com">
+            </div>
+            <div class="form-group">
+                <label>Database URL</label>
+                <input type="text" id="firebaseDatabaseURL" placeholder="https://seu-projeto.firebaseio.com">
+            </div>
+            <div class="form-group">
+                <label>Project ID</label>
+                <input type="text" id="firebaseProjectId" placeholder="seu-projeto">
+            </div>
+            <div class="form-group">
+                <label>Storage Bucket</label>
+                <input type="text" id="firebaseStorageBucket" placeholder="seu-projeto.appspot.com">
+            </div>
+            <div class="form-group">
+                <label>Messaging Sender ID</label>
+                <input type="text" id="firebaseMessagingSenderId" placeholder="123456789">
+            </div>
+            <div class="form-group">
+                <label>App ID</label>
+                <input type="text" id="firebaseAppId" placeholder="1:123456789:web:abc123">
+            </div>
+            
+            <div class="grid-2">
+                <button class="btn-success" onclick="salvarConfigFirebase()">
+                    ✅ Salvar e Conectar
+                </button>
+                <button class="btn-secondary" onclick="fecharModal('modalConfigFirebase')">
+                    ❌ Cancelar
+                </button>
+            </div>
         </div>
     </div>
     
@@ -801,82 +929,226 @@
     </div>
 
     <script>
-        // ==================== ESTADO DA APLICAÇÃO ====================
+        // ==================== CONFIGURAÇÃO FIREBASE ====================
         
+        let firebaseApp = null;
+        let database = null;
+        let firebaseConfigured = false;
+        
+        // Estado inicial com SEUS DADOS ATUAIS
         const estadoInicial = {
-            // Saldos atuais
-            saldoDia20: 324.44,  // Valor atual disponível
+            saldoDia20: 155.23,
             saldoDia5: 0,
             rendaExtra: 0,
             colchao: 0,
-            
-            // Contas fixas
             contas: [
-                // Pagar com Dia 20
                 { id: 1, nome: 'MEI', valor: 87.05, diaVenc: 20, pagarCom: 'dia20', pago: true, fixa: true },
                 { id: 2, nome: 'BB', valor: 400.50, diaVenc: 2, pagarCom: 'dia20', pago: true, fixa: true },
                 { id: 3, nome: 'Metrô (cartão)', valor: 129.60, diaVenc: 20, pagarCom: 'dia20', pago: true, fixa: true },
                 { id: 8, nome: 'Transporte (dinheiro)', valor: 328.80, diaVenc: 20, pagarCom: 'dia20', pago: true, fixa: true },
-                
-                // Pagar com Dia 5
                 { id: 4, nome: 'Empréstimo 99', valor: 227.49, diaVenc: 19, pagarCom: 'dia5', pago: false, fixa: true },
                 { id: 5, nome: 'Note', valor: 379.92, diaVenc: 10, pagarCom: 'dia5', pago: false, fixa: true },
                 { id: 6, nome: 'Apple Music', valor: 20.00, diaVenc: 7, pagarCom: 'dia5', pago: false, fixa: true },
                 { id: 7, nome: 'Netflix', valor: 20.90, diaVenc: 5, pagarCom: 'dia5', pago: false, fixa: true }
             ],
-            
-            // Gastos variáveis
             gastos: [
-                { id: Date.now() - 2, categoria: 'transporte', descricao: 'Uber até Sacomã', valor: 26.60, data: new Date().toLocaleDateString('pt-BR'), icon: '🚗' },
-                { id: Date.now() - 1, categoria: 'alimentacao', descricao: 'Salgado no terminal', valor: 8.00, data: new Date().toLocaleDateString('pt-BR'), icon: '🍔' }
+                { id: 1768952182875, categoria: 'transporte', descricao: 'Uber até Sacomã', valor: 26.60, data: '20/01/2026', icon: '🚗' },
+                { id: 1768952182876, categoria: 'alimentacao', descricao: 'Salgado no terminal', valor: 8.00, data: '20/01/2026', icon: '🍔' },
+                { id: 1768952193023, categoria: 'outros', descricao: 'Mato', valor: 60.00, data: '20/01/2026', icon: '📦' },
+                { id: 1769016238877, categoria: 'alimentacao', descricao: 'Ragazxo', valor: 48.00, data: '21/01/2026', icon: '🍔' },
+                { id: 1769021137111, categoria: 'alimentacao', descricao: 'Casquinha', valor: 5.00, data: '21/01/2026', icon: '🍔' },
+                { id: 1769021212171, categoria: 'transporte', descricao: 'Uber sacoma', valor: 26.32, data: '21/01/2026', icon: '🚗' },
+                { id: 1769021245958, categoria: 'transporte', descricao: 'Uber do ragazzo', valor: 17.60, data: '21/01/2026', icon: '🚗' },
+                { id: 1769021281461, categoria: 'lazer', descricao: 'Xeque mate', valor: 12.29, data: '21/01/2026', icon: '🎮' }
             ],
-            
-            // Histórico de transações
             historico: [
-                { id: 1, data: new Date().toLocaleString('pt-BR'), desc: 'Recebeu salário dia 20', valor: 1000.00, tipo: 'entrada' },
-                { id: 2, data: new Date().toLocaleString('pt-BR'), desc: 'Recebeu empréstimo 99', valor: 500.00, tipo: 'entrada' },
-                { id: 3, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou MEI', valor: 87.05, tipo: 'saida' },
-                { id: 4, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou BB', valor: 400.50, tipo: 'saida' },
-                { id: 5, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou Metrô (cartão)', valor: 129.60, tipo: 'saida' },
-                { id: 6, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou Transporte (dinheiro)', valor: 328.80, tipo: 'saida' },
-                { id: 7, data: new Date().toLocaleString('pt-BR'), desc: '🚗 Uber até Sacomã', valor: 26.60, tipo: 'saida' },
-                { id: 8, data: new Date().toLocaleString('pt-BR'), desc: '🍔 Salgado no terminal', valor: 8.00, tipo: 'saida' },
-                { id: 9, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou dívida pessoal', valor: 25.00, tipo: 'saida' },
-                { id: 10, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou dívida pessoal', valor: 26.00, tipo: 'saida' },
-                { id: 11, data: new Date().toLocaleString('pt-BR'), desc: 'Pagou dívida pessoal', valor: 27.50, tipo: 'saida' }
+                { id: 1, data: '20/01/2026, 20:36:22', desc: 'Recebeu salário dia 20', valor: 1000.00, tipo: 'entrada' },
+                { id: 2, data: '20/01/2026, 20:36:22', desc: 'Recebeu empréstimo 99', valor: 500.00, tipo: 'entrada' },
+                { id: 3, data: '20/01/2026, 20:36:22', desc: 'Pagou MEI', valor: 87.05, tipo: 'saida' },
+                { id: 4, data: '20/01/2026, 20:36:22', desc: 'Pagou BB', valor: 400.50, tipo: 'saida' },
+                { id: 5, data: '20/01/2026, 20:36:22', desc: 'Pagou Metrô (cartão)', valor: 129.60, tipo: 'saida' },
+                { id: 6, data: '20/01/2026, 20:36:22', desc: 'Pagou Transporte (dinheiro)', valor: 328.80, tipo: 'saida' },
+                { id: 7, data: '20/01/2026, 20:36:22', desc: '🚗 Uber até Sacomã', valor: 26.60, tipo: 'saida' },
+                { id: 8, data: '20/01/2026, 20:36:22', desc: '🍔 Salgado no terminal', valor: 8.00, tipo: 'saida' },
+                { id: 9, data: '20/01/2026, 20:36:22', desc: 'Pagou dívida pessoal', valor: 25.00, tipo: 'saida' },
+                { id: 10, data: '20/01/2026, 20:36:22', desc: 'Pagou dívida pessoal', valor: 26.00, tipo: 'saida' },
+                { id: 11, data: '20/01/2026, 20:36:22', desc: 'Pagou dívida pessoal', valor: 27.50, tipo: 'saida' },
+                { id: 1768952193024, data: '20/01/2026, 20:36:33', desc: '📦 Mato', valor: 60.00, tipo: 'saida' },
+                { id: 1769016238878, data: '21/01/2026, 14:23:58', desc: '🍔 Ragazxo', valor: 48.00, tipo: 'saida' },
+                { id: 1769021137113, data: '21/01/2026, 15:45:37', desc: '🍔 Casquinha', valor: 5.00, tipo: 'saida' },
+                { id: 1769021212172, data: '21/01/2026, 15:46:52', desc: '🚗 Uber sacoma', valor: 26.32, tipo: 'saida' },
+                { id: 1769021245959, data: '21/01/2026, 15:47:25', desc: '🚗 Uber do ragazzo', valor: 17.60, tipo: 'saida' },
+                { id: 1769021281462, data: '21/01/2026, 15:48:01', desc: '🎮 Xeque mate', valor: 12.29, tipo: 'saida' }
             ],
-            
-            // Meses fechados
             mesesFechados: []
         };
         
         let estado = JSON.parse(JSON.stringify(estadoInicial));
         
-        // ==================== FUNÇÕES DE PERSISTÊNCIA ====================
+        // ==================== FUNÇÕES FIREBASE ====================
         
-        function salvarDados() {
+        function inicializarFirebase(config) {
             try {
-                localStorage.setItem('financeApp_v2', JSON.stringify(estado));
-                console.log('✅ Dados salvos com sucesso!');
+                if (firebaseApp) {
+                    firebaseApp.delete();
+                }
+                
+                firebaseApp = firebase.initializeApp(config);
+                database = firebaseApp.database();
+                firebaseConfigured = true;
+                
+                atualizarStatusSync(true, 'Conectado à nuvem');
+                
+                // Escutar mudanças em tempo real
+                database.ref('financeiro').on('value', (snapshot) => {
+                    const dados = snapshot.val();
+                    if (dados) {
+                        estado = dados;
+                        atualizarInterface();
+                        console.log('✅ Dados sincronizados da nuvem');
+                    }
+                });
+                
+                // Fazer upload inicial se não houver dados
+                database.ref('financeiro').once('value', (snapshot) => {
+                    if (!snapshot.exists()) {
+                        salvarNaNuvem();
+                    }
+                });
+                
+                return true;
             } catch (error) {
-                console.error('❌ Erro ao salvar dados:', error);
-                alert('Erro ao salvar dados. Tente novamente.');
+                console.error('❌ Erro ao inicializar Firebase:', error);
+                atualizarStatusSync(false, 'Erro na configuração');
+                return false;
             }
         }
         
-        function carregarDados() {
+        function salvarNaNuvem() {
+            if (!firebaseConfigured || !database) {
+                console.log('⚠️ Firebase não configurado');
+                return;
+            }
+            
             try {
-                const dadosSalvos = localStorage.getItem('financeApp_v2');
+                database.ref('financeiro').set(estado);
+                console.log('☁️ Dados salvos na nuvem');
+            } catch (error) {
+                console.error('❌ Erro ao salvar na nuvem:', error);
+            }
+        }
+        
+        function carregarConfigFirebase() {
+            const config = localStorage.getItem('firebaseConfig');
+            if (config) {
+                try {
+                    const configObj = JSON.parse(config);
+                    inicializarFirebase(configObj);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar config Firebase:', error);
+                }
+            }
+        }
+        
+        function abrirModalConfigFirebase() {
+            // Carregar valores salvos se existirem
+            const config = localStorage.getItem('firebaseConfig');
+            if (config) {
+                const configObj = JSON.parse(config);
+                document.getElementById('firebaseApiKey').value = configObj.apiKey || '';
+                document.getElementById('firebaseAuthDomain').value = configObj.authDomain || '';
+                document.getElementById('firebaseDatabaseURL').value = configObj.databaseURL || '';
+                document.getElementById('firebaseProjectId').value = configObj.projectId || '';
+                document.getElementById('firebaseStorageBucket').value = configObj.storageBucket || '';
+                document.getElementById('firebaseMessagingSenderId').value = configObj.messagingSenderId || '';
+                document.getElementById('firebaseAppId').value = configObj.appId || '';
+            }
+            
+            document.getElementById('modalConfigFirebase').classList.add('active');
+        }
+        
+        function salvarConfigFirebase() {
+            const config = {
+                apiKey: document.getElementById('firebaseApiKey').value.trim(),
+                authDomain: document.getElementById('firebaseAuthDomain').value.trim(),
+                databaseURL: document.getElementById('firebaseDatabaseURL').value.trim(),
+                projectId: document.getElementById('firebaseProjectId').value.trim(),
+                storageBucket: document.getElementById('firebaseStorageBucket').value.trim(),
+                messagingSenderId: document.getElementById('firebaseMessagingSenderId').value.trim(),
+                appId: document.getElementById('firebaseAppId').value.trim()
+            };
+            
+            // Validar campos
+            if (!config.apiKey || !config.databaseURL || !config.projectId) {
+                alert('❌ Por favor, preencha pelo menos API Key, Database URL e Project ID!');
+                return;
+            }
+            
+            // Salvar config
+            localStorage.setItem('firebaseConfig', JSON.stringify(config));
+            
+            // Inicializar Firebase
+            if (inicializarFirebase(config)) {
+                fecharModal('modalConfigFirebase');
+                alert('✅ Firebase configurado com sucesso!\n\n☁️ Seus dados agora serão sincronizados automaticamente!');
+                
+                // Fazer upload dos dados atuais
+                salvarNaNuvem();
+            } else {
+                alert('❌ Erro ao conectar ao Firebase.\n\nVerifique suas credenciais e tente novamente.');
+            }
+        }
+        
+        function atualizarStatusSync(conectado, texto) {
+            const statusEl = document.getElementById('syncStatus');
+            const iconEl = document.getElementById('syncIcon');
+            const textEl = document.getElementById('syncText');
+            
+            if (conectado) {
+                statusEl.className = 'sync-status connected';
+                iconEl.textContent = '☁️';
+                textEl.textContent = texto || 'Conectado';
+            } else {
+                statusEl.className = 'sync-status disconnected';
+                iconEl.textContent = '⚠️';
+                textEl.textContent = texto || 'Desconectado';
+            }
+        }
+        
+        // ==================== FUNÇÕES DE PERSISTÊNCIA ====================
+        
+        function salvarDados() {
+            // Salvar localmente
+            try {
+                localStorage.setItem('financeApp_v3', JSON.stringify(estado));
+            } catch (error) {
+                console.error('❌ Erro ao salvar localmente:', error);
+            }
+            
+            // Salvar na nuvem
+            salvarNaNuvem();
+        }
+        
+        function carregarDados() {
+            // Se Firebase configurado, dados virão de lá
+            if (firebaseConfigured) {
+                console.log('⏳ Aguardando dados do Firebase...');
+                return;
+            }
+            
+            // Caso contrário, carregar do localStorage
+            try {
+                const dadosSalvos = localStorage.getItem('financeApp_v3');
                 if (dadosSalvos) {
                     estado = JSON.parse(dadosSalvos);
-                    console.log('✅ Dados carregados com sucesso!');
+                    console.log('✅ Dados carregados do localStorage');
                 } else {
-                    console.log('ℹ️ Nenhum dado salvo encontrado. Usando estado inicial.');
+                    console.log('ℹ️ Usando estado inicial');
                 }
             } catch (error) {
                 console.error('❌ Erro ao carregar dados:', error);
-                alert('Erro ao carregar dados salvos. Iniciando com dados padrão.');
             }
+            
             atualizarInterface();
         }
         
@@ -893,14 +1165,19 @@
             link.click();
             URL.revokeObjectURL(url);
             
-            alert('✅ Backup realizado com sucesso!');
+            alert('✅ Backup local realizado com sucesso!');
         }
         
         function resetarDados() {
-            if (confirm('⚠️ ATENÇÃO!\n\nDeseja realmente APAGAR TODOS os dados?\n\nEsta ação não pode ser desfeita!\n\nRecomendamos fazer um backup antes.')) {
+            if (confirm('⚠️ ATENÇÃO!\n\nDeseja realmente APAGAR TODOS os dados?\n\nEsta ação não pode ser desfeita!')) {
                 if (confirm('🚨 Última confirmação!\n\nTodos os seus dados serão perdidos permanentemente.\n\nTem certeza absoluta?')) {
-                    localStorage.removeItem('financeApp_v2');
+                    localStorage.removeItem('financeApp_v3');
                     estado = JSON.parse(JSON.stringify(estadoInicial));
+                    
+                    if (firebaseConfigured) {
+                        salvarNaNuvem();
+                    }
+                    
                     atualizarInterface();
                     alert('✅ Dados resetados com sucesso!');
                 }
@@ -1200,9 +1477,7 @@
         }
         
         function abrirModalGraficos() {
-            fecharModal('modalGraficos');
-            
-            if (estado.gastos.length === 0) {
+            if (estado.gastos.length === 0 && estado.contas.filter(c => c.pago).length === 0) {
                 alert('ℹ️ Nenhum gasto registrado ainda!');
                 return;
             }
@@ -1605,7 +1880,6 @@ ${saldoPositivo ? '🎉 Parabéns! Você teve saldo positivo!' : '⚠️ Atenç�
             const totalDisponivel = estado.saldoDia20 + estado.saldoDia5 + estado.rendaExtra;
             const contasAPagar = estado.contas.filter(c => !c.pago).reduce((sum, c) => sum + c.valor, 0);
             const numContasPendentes = estado.contas.filter(c => !c.pago).length;
-            const totalGastos = estado.gastos.reduce((sum, g) => sum + g.valor, 0);
             
             // Atualizar cards
             document.getElementById('totalDisponivel').textContent = `R$ ${totalDisponivel.toFixed(2)}`;
@@ -1787,8 +2061,25 @@ ${saldoPositivo ? '🎉 Parabéns! Você teve saldo positivo!' : '⚠️ Atenç�
         
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Iniciando sistema financeiro...');
-            carregarDados();
-            console.log('✅ Sistema carregado com sucesso!');
+            
+            // Carregar config Firebase
+            carregarConfigFirebase();
+            
+            // Aguardar um pouco para Firebase conectar
+            setTimeout(() => {
+                carregarDados();
+                
+                // Ocultar loading e mostrar app
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                
+                console.log('✅ Sistema carregado com sucesso!');
+                
+                // Se Firebase não configurado, mostrar alerta
+                if (!firebaseConfigured) {
+                    atualizarStatusSync(false, 'Clique em "Configurar Firebase" para sincronizar');
+                }
+            }, 1000);
         });
         
         // Fechar modais ao clicar fora
