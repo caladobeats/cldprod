@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Controle Financeiro</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS para Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #ff6b35;
+            --secondary: #f7931e;
+            --danger: #dc3545;
+            --success: #28a745;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ff6b35 100%);
+            min-height: 100vh;
+            padding: 1rem;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .sync-status {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .sync-status.connected {
+            background: rgba(40, 167, 69, 0.3);
+        }
+        
+        .sync-status.disconnected {
+            background: rgba(220, 53, 69, 0.3);
+        }
+        
+        /* Cards de Resumo */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-icon {
+            font-size: 2rem;
+        }
+        
+        .card-title {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+        
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+        
+        /* Seções */
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Grid de Ações */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Formulários */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Botões */
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: #333;
+        }
+        
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            width: auto;
+        }
+        
+        /* Lista de Contas */
+        .bill-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .bill-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .bill-item.paid {
+            background: #d4edda;
+            border-color: var(--success);
+            opacity: 0.8;
+        }
+        
+        .bill-item.overdue {
+            background: #f8d7da;
+            border-color: var(--danger);
+        }
+        
+        .bill-info {
+            flex: 1;
+        }
+        
+        .bill-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .bill-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .bill-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Gastos */
+        .expense-item {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        
+        /* Histórico */
+        .history-item {
+            padding: 1rem;
+            border-left: 4px solid #ddd;
+            margin-bottom: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover {
+            background: #e9ecef;
+            border-left-color: var(--primary);
+        }
+        
+        .history-item.income {
+            border-left-color: var(--success);
+        }
+        
+        .history-item.expense {
+            border-left-color: var(--danger);
+        }
+        
+        .history-item.saving {
+            border-left-color: var(--info);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .history-desc {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .history-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .history-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        /* Gráficos */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1.5rem 0;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            width: auto;
+            padding: 0;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        /* Alertas */
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+        
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+        
+        /* Grid Responsivo */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        /* Utilitários */
+        .hidden {
+            display: none !important;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+        
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+        
+        .footer-text {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .card-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading inicial -->
+    <div id="loadingScreen" class="loading">
+        <div class="spinner"></div>
+        <p>Carregando dados...</p>
+    </div>
+    
+    <div id="mainApp" class="container hidden">
+        <h1>💰 Controle Financeiro</h1>
+        <p class="subtitle">Gerencie suas finanças com sincronização na nuvem</p>
+        
+        <!-- Status de Sincronização -->
+        <div id="syncStatus" class="sync-status disconnected">
+            <span id="syncIcon">⚠️</span>
+            <span id="syncText">Configuração necessária</span>
+        </div>
+        
+        <!-- Alertas de Vencimento -->
+        <div id="alertsContainer"></div>
+        
+        <!-- Cards de Resumo -->
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💵</span>
+                    <span class="card-title">Disponível Total</span>
+                </div>
+                <div class="card-value" style="color: var(--success);" id="totalDisponivel">R$ 0,00</div>
+                <div class="card-subtitle">Saldo atual</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💰</span>
+                    <span class="card-title">Salário Dia 20</span>
+                </div>
+                <div class="card-value" style="color: var(--primary);" id="saldoDia20">R$ 0,00</div>
+                <div class="card-subtitle">Próximo: 20/02</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💰</span>
+                    <span class="card-title">Salário Dia 5</span>
+                </div>
+                <div class="card-value" style="color: var(--secondary);" id="saldoDia5">R$ 0,00</div>
+                <div class="card-subtitle">Próximo: 05/02</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🎵</span>
+                    <span class="card-title">Renda Extra</span>
+                </div>
+                <div class="card-value" style="color: #9b59b6;" id="rendaExtra">R$ 0,00</div>
+                <div class="card-subtitle">Música/Projetos</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🏦</span>
+                    <span class="card-title">Colchão</span>
+                </div>
+                <div class="card-value" style="color: var(--info);" id="colchao">R$ 0,00</div>
+                <div class="card-subtitle">Reserva de emergência</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📋</span>
+                    <span class="card-title">Contas a Pagar</span>
+                </div>
+                <div class="card-value" style="color: var(--danger);" id="contasAPagar">R$ 0,00</div>
+                <div class="card-subtitle" id="contasPendentes">0 pendentes</div>
+            </div>
+        </div>
+        
+        <!-- Ações Rápidas -->
+        <div class="actions-grid">
+            <!-- Adicionar Receita -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">💰 Adicionar Receita</h2>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Receita</label>
+                    <select id="tipoReceita">
+                        <option value="dia20">💰 Salário Dia 20</option>
+                        <option value="dia5">💰 Salário Dia 5</option>
+                        <option value="extra">🎵 Renda Extra (Música)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="valorReceita" placeholder="1000.00" step="0.01">
+                </div>
+                <button class="btn-success" onclick="adicionarReceita()">
+                    ✅ Adicionar Receita
+                </button>
+            </div>
+            
+            <!-- Registrar Gasto -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">💸 Registrar Gasto</h2>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="categoriaGasto">
+                        <option value="alimentacao">🍔 Alimentação</option>
+                        <option value="transporte">🚗 Transporte</option>
+                        <option value="saude">💊 Saúde</option>
+                        <option value="lazer">🎮 Lazer</option>
+                        <option value="educacao">📚 Educação</option>
+                        <option value="moradia">🏠 Moradia</option>
+                        <option value="outros">📦 Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="descricaoGasto" placeholder="Ex: Almoço, Uber, etc">
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="valorGasto" placeholder="50.00" step="0.01">
+                </div>
+                <button class="btn-danger" onclick="registrarGasto()">
+                    💸 Registrar Gasto
+                </button>
+            </div>
+            
+            <!-- Guardar no Colchão -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">🏦 Guardar no Colchão</h2>
+                </div>
+                <p class="mb-2" style="color: #666;">
+                    💡 Construa sua reserva de emergência
+                </p>
+                <div class="form-group">
+                    <label>Valor a Guardar (R$)</label>
+                    <input type="number" id="valorColchao" placeholder="100.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Origem do Dinheiro</label>
+                    <select id="origemColchao">
+                        <option value="dia20">💰 Salário Dia 20</option>
+                        <option value="dia5">💰 Salário Dia 5</option>
+                        <option value="extra">🎵 Renda Extra</option>
+                    </select>
+                </div>
+                <button class="btn-info" onclick="guardarColchao()">
+                    💰 Guardar Agora
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contas Fixas -->
+        <div class="grid-2">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">💰 Contas - Salário Dia 20</h2>
+                    <button class="btn-primary btn-small" onclick="abrirModalNovaConta('dia20')">
+                        ➕ Nova Conta
+                    </button>
+                </div>
+                <div id="contasDia20"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">💰 Contas - Salário Dia 5</h2>
+                    <button class="btn-primary btn-small" onclick="abrirModalNovaConta('dia5')">
+                        ➕ Nova Conta
+                    </button>
+                </div>
+                <div id="contasDia5"></div>
+            </div>
+        </div>
+        
+        <!-- Gastos do Mês -->
+        <div class="section" id="secaoGastos" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">💸 Todos os Gastos do Mês</h2>
+                <button class="btn-warning btn-small" onclick="abrirModalGraficos()">
+                    📊 Ver Gráficos
+                </button>
+            </div>
+            <div id="listaGastos"></div>
+            <div class="mt-3" style="padding: 1.5rem; background: linear-gradient(135deg, #ffe6e6, #ffcccc); border-radius: 12px; border: 2px solid var(--danger);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 1.2rem;">💸 Total de Gastos do Mês:</span>
+                    <span id="totalGastos" style="font-size: 1.8rem; font-weight: bold; color: var(--danger);">R$ 0,00</span>
+                </div>
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.9rem; color: #666;">
+                    Inclui gastos variáveis + contas fixas pagas
+                </div>
+            </div>
+        </div>
+        
+        <!-- Histórico -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">📝 Histórico de Transações</h2>
+                <button class="btn-warning btn-small" onclick="exportarExcel()">
+                    📥 Exportar Excel
+                </button>
+            </div>
+            <div id="historico" style="max-height: 500px; overflow-y: auto;"></div>
+        </div>
+        
+        <!-- Ações do Sistema -->
+        <div class="grid-2">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">📊 Relatórios</h2>
+                </div>
+                <button class="btn-warning mb-2" onclick="fecharMes()">
+                    📅 Fechar Mês Atual
+                </button>
+                <button class="btn-info" onclick="abrirModalMesesAnteriores()">
+                    📆 Ver Meses Anteriores
+                </button>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">⚙️ Configurações</h2>
+                </div>
+                <button class="btn-secondary mb-2" onclick="abrirModalConfigFirebase()">
+                    🔧 Configurar Firebase
+                </button>
+                <button class="btn-secondary mb-2" onclick="backupDados()">
+                    💾 Backup Local
+                </button>
+                <button class="btn-danger" onclick="resetarDados()">
+                    🗑️ Limpar Dados
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">☁️ Dados sincronizados automaticamente na nuvem</p>
+            <p class="footer-text mt-1">💡 Acesse de qualquer dispositivo!</p>
+        </div>
+    </div>
+    
+    <!-- Modal Config Firebase -->
+    <div id="modalConfigFirebase" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔧 Configurar Firebase</h3>
+                <button class="close-modal" onclick="fecharModal('modalConfigFirebase')">&times;</button>
+            </div>
+            
+            <div class="alert alert-info">
+                <span class="alert-icon">ℹ️</span>
+                <div>
+                    <strong>Configure uma vez e sincronize para sempre!</strong>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                        Após configurar, seus dados serão sincronizados automaticamente entre todos os seus dispositivos.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>API Key</label>
+                <input type="text" id="firebaseApiKey" placeholder="Cole sua API Key aqui">
+            </div>
+            <div class="form-group">
+                <label>Auth Domain</label>
+                <input type="text" id="firebaseAuthDomain" placeholder="seu-projeto.firebaseapp.com">
+            </div>
+            <div class="form-group">
+                <label>Database URL</label>
+                <input type="text" id="firebaseDatabaseURL" placeholder="https://seu-projeto.firebaseio.com">
+            </div>
+            <div class="form-group">
+                <label>Project ID</label>
+                <input type="text" id="firebaseProjectId" placeholder="seu-projeto">
+            </div>
+            <div class="form-group">
+                <label>Storage Bucket</label>
+                <input type="text" id="firebaseStorageBucket" placeholder="seu-projeto.appspot.com">
+            </div>
+            <div class="form-group">
+                <label>Messaging Sender ID</label>
+                <input type="text" id="firebaseMessagingSenderId" placeholder="123456789">
+            </div>
+            <div class="form-group">
+                <label>App ID</label>
+                <input type="text" id="firebaseAppId" placeholder="1:123456789:web:abc123">
+            </div>
+            
+            <div class="grid-2">
+                <button class="btn-success" onclick="salvarConfigFirebase()">
+                    ✅ Salvar e Conectar
+                </button>
+                <button class="btn-secondary" onclick="fecharModal('modalConfigFirebase')">
+                    ❌ Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Nova Conta -->
+    <div id="modalNovaConta" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">➕ Adicionar Nova Conta Fixa</h3>
+                <button class="close-modal" onclick="fecharModal('modalNovaConta')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nome da Conta</label>
+                <input type="text" id="nomeNovaConta" placeholder="Ex: Spotify, Internet, etc">
+            </div>
+            <div class="form-group">
+                <label>Valor (R$)</label>
+                <input type="number" id="valorNovaConta" placeholder="49.90" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Dia de Vencimento</label>
+                <input type="number" id="diaNovaConta" placeholder="15" min="1" max="31">
+            </div>
+            <input type="hidden" id="pagarComNovaConta">
+            <div class="grid-2">
+                <button class="btn-success" onclick="adicionarNovaConta()">
+                    ✅ Adicionar
+                </button>
+                <button class="btn-secondary" onclick="fecharModal('modalNovaConta')">
+                    ❌ Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Gráficos -->
+    <div id="modalGraficos" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📊 Análise de Gastos</h3>
+                <button class="close-modal" onclick="fecharModal('modalGraficos')">&times;</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartGastos"></canvas>
+            </div>
+            <div class="mt-3">
+                <h4 class="mb-2">📋 Resumo por Categoria</h4>
+                <div id="resumoCategorias"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Meses Anteriores -->
+    <div id="modalMeses" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📆 Meses Anteriores</h3>
+                <button class="close-modal" onclick="fecharModal('modalMeses')">&times;</button>
+            </div>
+            <div id="listaMeses"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURAÇÃO FIREBASE ====================
+        
+        let firebaseApp = null;
+        let database = null;
+        let firebaseConfigured = false;
+        
+        // Estado inicial com SEUS DADOS ATUAIS
+        const estadoInicial = {
+            saldoDia20: 155.23,
+            saldoDia5: 0,
+            rendaExtra: 0,
+            colchao: 0,
+            contas: [
+                { id: 1, nome: 'MEI', valor: 87.05, diaVenc: 20, pagarCom: 'dia20', pago: true, fixa: true },
+                { id: 2, nome: 'BB', valor: 400.50, diaVenc: 2, pagarCom: 'dia20', pago: true, fixa: true },
+                { id: 3, nome: 'Metrô (cartão)', valor: 129.60, diaVenc: 20, pagarCom: 'dia20', pago: true, fixa: true },
+                { id: 8, nome: 'Transporte (dinheiro)', valor: 328.80, diaVenc: 20, pagarCom: 'dia20', pago: true, fixa: true },
+                { id: 4, nome: 'Empréstimo 99', valor: 227.49, diaVenc: 19, pagarCom: 'dia5', pago: false, fixa: true },
+                { id: 5, nome: 'Note', valor: 379.92, diaVenc: 10, pagarCom: 'dia5', pago: false, fixa: true },
+                { id: 6, nome: 'Apple Music', valor: 20.00, diaVenc: 7, pagarCom: 'dia5', pago: false, fixa: true },
+                { id: 7, nome: 'Netflix', valor: 20.90, diaVenc: 5, pagarCom: 'dia5', pago: false, fixa: true }
+            ],
+            gastos: [
+                { id: 1768952182875, categoria: 'transporte', descricao: 'Uber até Sacomã', valor: 26.60, data: '20/01/2026', icon: '🚗' },
+                { id: 1768952182876, categoria: 'alimentacao', descricao: 'Salgado no terminal', valor: 8.00, data: '20/01/2026', icon: '🍔' },
+                { id: 1768952193023, categoria: 'outros', descricao: 'Mato', valor: 60.00, data: '20/01/2026', icon: '📦' },
+                { id: 1769016238877, categoria: 'alimentacao', descricao: 'Ragazxo', valor: 48.00, data: '21/01/2026', icon: '🍔' },
+                { id: 1769021137111, categoria: 'alimentacao', descricao: 'Casquinha', valor: 5.00, data: '21/01/2026', icon: '🍔' },
+                { id: 1769021212171, categoria: 'transporte', descricao: 'Uber sacoma', valor: 26.32, data: '21/01/2026', icon: '🚗' },
+                { id: 1769021245958, categoria: 'transporte', descricao: 'Uber do ragazzo', valor: 17.60, data: '21/01/2026', icon: '🚗' },
+                { id: 1769021281461, categoria: 'lazer', descricao: 'Xeque mate', valor: 12.29, data: '21/01/2026', icon: '🎮' }
+            ],
+            historico: [
+                { id: 1, data: '20/01/2026, 20:36:22', desc: 'Recebeu salário dia 20', valor: 1000.00, tipo: 'entrada' },
+                { id: 2, data: '20/01/2026, 20:36:22', desc: 'Recebeu empréstimo 99', valor: 500.00, tipo: 'entrada' },
+                { id: 3, data: '20/01/2026, 20:36:22', desc: 'Pagou MEI', valor: 87.05, tipo: 'saida' },
+                { id: 4, data: '20/01/2026, 20:36:22', desc: 'Pagou BB', valor: 400.50, tipo: 'saida' },
+                { id: 5, data: '20/01/2026, 20:36:22', desc: 'Pagou Metrô (cartão)', valor: 129.60, tipo: 'saida' },
+                { id: 6, data: '20/01/2026, 20:36:22', desc: 'Pagou Transporte (dinheiro)', valor: 328.80, tipo: 'saida' },
+                { id: 7, data: '20/01/2026, 20:36:22', desc: '🚗 Uber até Sacomã', valor: 26.60, tipo: 'saida' },
+                { id: 8, data: '20/01/2026, 20:36:22', desc: '🍔 Salgado no terminal', valor: 8.00, tipo: 'saida' },
+                { id: 9, data: '20/01/2026, 20:36:22', desc: 'Pagou dívida pessoal', valor: 25.00, tipo: 'saida' },
+                { id: 10, data: '20/01/2026, 20:36:22', desc: 'Pagou dívida pessoal', valor: 26.00, tipo: 'saida' },
+                { id: 11, data: '20/01/2026, 20:36:22', desc: 'Pagou dívida pessoal', valor: 27.50, tipo: 'saida' },
+                { id: 1768952193024, data: '20/01/2026, 20:36:33', desc: '📦 Mato', valor: 60.00, tipo: 'saida' },
+                { id: 1769016238878, data: '21/01/2026, 14:23:58', desc: '🍔 Ragazxo', valor: 48.00, tipo: 'saida' },
+                { id: 1769021137113, data: '21/01/2026, 15:45:37', desc: '🍔 Casquinha', valor: 5.00, tipo: 'saida' },
+                { id: 1769021212172, data: '21/01/2026, 15:46:52', desc: '🚗 Uber sacoma', valor: 26.32, tipo: 'saida' },
+                { id: 1769021245959, data: '21/01/2026, 15:47:25', desc: '🚗 Uber do ragazzo', valor: 17.60, tipo: 'saida' },
+                { id: 1769021281462, data: '21/01/2026, 15:48:01', desc: '🎮 Xeque mate', valor: 12.29, tipo: 'saida' }
+            ],
+            mesesFechados: []
+        };
+        
+        let estado = JSON.parse(JSON.stringify(estadoInicial));
+        
+        // ==================== FUNÇÕES FIREBASE ====================
+        
+        function inicializarFirebase(config) {
+            try {
+                if (firebaseApp) {
+                    firebaseApp.delete();
+                }
+                
+                firebaseApp = firebase.initializeApp(config);
+                database = firebaseApp.database();
+                firebaseConfigured = true;
+                
+                atualizarStatusSync(true, 'Conectado à nuvem');
+                
+                // Escutar mudanças em tempo real
+                database.ref('financeiro').on('value', (snapshot) => {
+                    const dados = snapshot.val();
+                    if (dados) {
+                        estado = dados;
+                        atualizarInterface();
+                        console.log('✅ Dados sincronizados da nuvem');
+                    }
+                });
+                
+                // Fazer upload inicial se não houver dados
+                database.ref('financeiro').once('value', (snapshot) => {
+                    if (!snapshot.exists()) {
+                        salvarNaNuvem();
+                    }
+                });
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Erro ao inicializar Firebase:', error);
+                atualizarStatusSync(false, 'Erro na configuração');
+                return false;
+            }
+        }
+        
+        function salvarNaNuvem() {
+            if (!firebaseConfigured || !database) {
+                console.log('⚠️ Firebase não configurado');
+                return;
+            }
+            
+            try {
+                database.ref('financeiro').set(estado);
+                console.log('☁️ Dados salvos na nuvem');
+            } catch (error) {
+                console.error('❌ Erro ao salvar na nuvem:', error);
+            }
+        }
+        
+        function carregarConfigFirebase() {
+            const config = localStorage.getItem('firebaseConfig');
+            if (config) {
+                try {
+                    const configObj = JSON.parse(config);
+                    inicializarFirebase(configObj);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar config Firebase:', error);
+                }
+            }
+        }
+        
+        function abrirModalConfigFirebase() {
+            // Carregar valores salvos se existirem
+            const config = localStorage.getItem('firebaseConfig');
+            if (config) {
+                const configObj = JSON.parse(config);
+                document.getElementById('firebaseApiKey').value = configObj.apiKey || '';
+                document.getElementById('firebaseAuthDomain').value = configObj.authDomain || '';
+                document.getElementById('firebaseDatabaseURL').value = configObj.databaseURL || '';
+                document.getElementById('firebaseProjectId').value = configObj.projectId || '';
+                document.getElementById('firebaseStorageBucket').value = configObj.storageBucket || '';
+                document.getElementById('firebaseMessagingSenderId').value = configObj.messagingSenderId || '';
+                document.getElementById('firebaseAppId').value = configObj.appId || '';
+            }
+            
+            document.getElementById('modalConfigFirebase').classList.add('active');
+        }
+        
+        function salvarConfigFirebase() {
+            const config = {
+                apiKey: document.getElementById('firebaseApiKey').value.trim(),
+                authDomain: document.getElementById('firebaseAuthDomain').value.trim(),
+                databaseURL: document.getElementById('firebaseDatabaseURL').value.trim(),
+                projectId: document.getElementById('firebaseProjectId').value.trim(),
+                storageBucket: document.getElementById('firebaseStorageBucket').value.trim(),
+                messagingSenderId: document.getElementById('firebaseMessagingSenderId').value.trim(),
+                appId: document.getElementById('firebaseAppId').value.trim()
+            };
+            
+            // Validar campos
+            if (!config.apiKey || !config.databaseURL || !config.projectId) {
+                alert('❌ Por favor, preencha pelo menos API Key, Database URL e Project ID!');
+                return;
+            }
+            
+            // Salvar config
+            localStorage.setItem('firebaseConfig', JSON.stringify(config));
+            
+            // Inicializar Firebase
+            if (inicializarFirebase(config)) {
+                fecharModal('modalConfigFirebase');
+                alert('✅ Firebase configurado com sucesso!\n\n☁️ Seus dados agora serão sincronizados automaticamente!');
+                
+                // Fazer upload dos dados atuais
+                salvarNaNuvem();
+            } else {
+                alert('❌ Erro ao conectar ao Firebase.\n\nVerifique suas credenciais e tente novamente.');
+            }
+        }
+        
+        function atualizarStatusSync(conectado, texto) {
+            const statusEl = document.getElementById('syncStatus');
+            const iconEl = document.getElementById('syncIcon');
+            const textEl = document.getElementById('syncText');
+            
+            if (conectado) {
+                statusEl.className = 'sync-status connected';
+                iconEl.textContent = '☁️';
+                textEl.textContent = texto || 'Conectado';
+            } else {
+                statusEl.className = 'sync-status disconnected';
+                iconEl.textContent = '⚠️';
+                textEl.textContent = texto || 'Desconectado';
+            }
+        }
+        
+        // ==================== FUNÇÕES DE PERSISTÊNCIA ====================
+        
+        function salvarDados() {
+            // Salvar localmente
+            try {
+                localStorage.setItem('financeApp_v3', JSON.stringify(estado));
+            } catch (error) {
+                console.error('❌ Erro ao salvar localmente:', error);
+            }
+            
+            // Salvar na nuvem
+            salvarNaNuvem();
+        }
+        
+        function carregarDados() {
+            // Se Firebase configurado, dados virão de lá
+            if (firebaseConfigured) {
+                console.log('⏳ Aguardando dados do Firebase...');
+                return;
+            }
+            
+            // Caso contrário, carregar do localStorage
+            try {
+                const dadosSalvos = localStorage.getItem('financeApp_v3');
+                if (dadosSalvos) {
+                    estado = JSON.parse(dadosSalvos);
+                    console.log('✅ Dados carregados do localStorage');
+                } else {
+                    console.log('ℹ️ Usando estado inicial');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+            }
+            
+            atualizarInterface();
+        }
+        
+        function backupDados() {
+            const dataBackup = new Date().toISOString().split('T')[0];
+            const nomeArquivo = `backup-financeiro-${dataBackup}.json`;
+            const conteudo = JSON.stringify(estado, null, 2);
+            
+            const blob = new Blob([conteudo], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nomeArquivo;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Backup local realizado com sucesso!');
+        }
+        
+        function resetarDados() {
+            if (confirm('⚠️ ATENÇÃO!\n\nDeseja realmente APAGAR TODOS os dados?\n\nEsta ação não pode ser desfeita!')) {
+                if (confirm('🚨 Última confirmação!\n\nTodos os seus dados serão perdidos permanentemente.\n\nTem certeza absoluta?')) {
+                    localStorage.removeItem('financeApp_v3');
+                    estado = JSON.parse(JSON.stringify(estadoInicial));
+                    
+                    if (firebaseConfigured) {
+                        salvarNaNuvem();
+                    }
+                    
+                    atualizarInterface();
+                    alert('✅ Dados resetados com sucesso!');
+                }
+            }
+        }
+        
+        // ==================== FUNÇÕES DE TRANSAÇÃO ====================
+        
+        function adicionarHistorico(desc, valor, tipo) {
+            estado.historico.push({
+                id: Date.now(),
+                data: new Date().toLocaleString('pt-BR'),
+                desc: desc,
+                valor: parseFloat(valor),
+                tipo: tipo
+            });
+        }
+        
+        function adicionarReceita() {
+            const tipo = document.getElementById('tipoReceita').value;
+            const valor = parseFloat(document.getElementById('valorReceita').value);
+            
+            if (isNaN(valor) || valor <= 0) {
+                alert('❌ Por favor, insira um valor válido!');
+                return;
+            }
+            
+            let descricao = '';
+            
+            switch(tipo) {
+                case 'dia20':
+                    estado.saldoDia20 += valor;
+                    descricao = '💰 Recebeu salário dia 20';
+                    break;
+                case 'dia5':
+                    estado.saldoDia5 += valor;
+                    descricao = '💰 Recebeu salário dia 5';
+                    break;
+                case 'extra':
+                    estado.rendaExtra += valor;
+                    descricao = '🎵 Recebeu renda extra (música)';
+                    break;
+            }
+            
+            adicionarHistorico(descricao, valor, 'entrada');
+            
+            document.getElementById('valorReceita').value = '';
+            salvarDados();
+            atualizarInterface();
+            
+            alert(`✅ Receita de R$ ${valor.toFixed(2)} adicionada com sucesso!`);
+        }
+        
+        function registrarGasto() {
+            const categoria = document.getElementById('categoriaGasto').value;
+            const descricao = document.getElementById('descricaoGasto').value.trim();
+            const valor = parseFloat(document.getElementById('valorGasto').value);
+            
+            if (!descricao || isNaN(valor) || valor <= 0) {
+                alert('❌ Por favor, preencha todos os campos corretamente!');
+                return;
+            }
+            
+            const icones = {
+                alimentacao: '🍔',
+                transporte: '🚗',
+                saude: '💊',
+                lazer: '🎮',
+                educacao: '📚',
+                moradia: '🏠',
+                outros: '📦'
+            };
+            
+            // Descontar do saldo disponível
+            const totalDisponivel = estado.saldoDia20 + estado.saldoDia5 + estado.rendaExtra;
+            
+            if (totalDisponivel < valor) {
+                alert('❌ Saldo insuficiente para realizar este gasto!');
+                return;
+            }
+            
+            // Ordem de desconto: rendaExtra -> saldoDia20 -> saldoDia5
+            let valorRestante = valor;
+            
+            if (estado.rendaExtra >= valorRestante) {
+                estado.rendaExtra -= valorRestante;
+                valorRestante = 0;
+            } else if (estado.rendaExtra > 0) {
+                valorRestante -= estado.rendaExtra;
+                estado.rendaExtra = 0;
+            }
+            
+            if (valorRestante > 0) {
+                if (estado.saldoDia20 >= valorRestante) {
+                    estado.saldoDia20 -= valorRestante;
+                    valorRestante = 0;
+                } else if (estado.saldoDia20 > 0) {
+                    valorRestante -= estado.saldoDia20;
+                    estado.saldoDia20 = 0;
+                }
+            }
+            
+            if (valorRestante > 0) {
+                estado.saldoDia5 -= valorRestante;
+            }
+            
+            // Adicionar gasto
+            estado.gastos.push({
+                id: Date.now(),
+                categoria: categoria,
+                descricao: descricao,
+                valor: valor,
+                data: new Date().toLocaleDateString('pt-BR'),
+                icon: icones[categoria]
+            });
+            
+            adicionarHistorico(`${icones[categoria]} ${descricao}`, valor, 'saida');
+            
+            document.getElementById('descricaoGasto').value = '';
+            document.getElementById('valorGasto').value = '';
+            
+            salvarDados();
+            atualizarInterface();
+            
+            alert(`✅ Gasto de R$ ${valor.toFixed(2)} registrado!`);
+        }
+        
+        function guardarColchao() {
+            const valor = parseFloat(document.getElementById('valorColchao').value);
+            const origem = document.getElementById('origemColchao').value;
+            
+            if (isNaN(valor) || valor <= 0) {
+                alert('❌ Por favor, insira um valor válido!');
+                return;
+            }
+            
+            let saldoOrigem = 0;
+            let nomeOrigem = '';
+            
+            switch(origem) {
+                case 'dia20':
+                    saldoOrigem = estado.saldoDia20;
+                    nomeOrigem = 'Salário Dia 20';
+                    break;
+                case 'dia5':
+                    saldoOrigem = estado.saldoDia5;
+                    nomeOrigem = 'Salário Dia 5';
+                    break;
+                case 'extra':
+                    saldoOrigem = estado.rendaExtra;
+                    nomeOrigem = 'Renda Extra';
+                    break;
+            }
+            
+            if (saldoOrigem < valor) {
+                alert(`❌ Saldo insuficiente em ${nomeOrigem}!\nDisponível: R$ ${saldoOrigem.toFixed(2)}`);
+                return;
+            }
+            
+            // Transferir para colchão
+            switch(origem) {
+                case 'dia20':
+                    estado.saldoDia20 -= valor;
+                    break;
+                case 'dia5':
+                    estado.saldoDia5 -= valor;
+                    break;
+                case 'extra':
+                    estado.rendaExtra -= valor;
+                    break;
+            }
+            
+            estado.colchao += valor;
+            adicionarHistorico(`🏦 Guardou no colchão (de ${nomeOrigem})`, valor, 'colchao');
+            
+            document.getElementById('valorColchao').value = '';
+            salvarDados();
+            atualizarInterface();
+            
+            alert(`✅ R$ ${valor.toFixed(2)} guardado no colchão!\n\nNovo saldo do colchão: R$ ${estado.colchao.toFixed(2)}`);
+        }
+        
+        function toggleConta(id) {
+            const conta = estado.contas.find(c => c.id === id);
+            if (!conta) return;
+            
+            conta.pago = !conta.pago;
+            
+            if (conta.pago) {
+                // Descontar do saldo apropriado
+                const totalDisponivel = estado.saldoDia20 + estado.saldoDia5 + estado.rendaExtra;
+                
+                if (totalDisponivel < conta.valor) {
+                    alert(`❌ Saldo insuficiente para pagar ${conta.nome}!`);
+                    conta.pago = false;
+                    return;
+                }
+                
+                // Ordem de desconto
+                let valorRestante = conta.valor;
+                
+                if (estado.rendaExtra >= valorRestante) {
+                    estado.rendaExtra -= valorRestante;
+                    valorRestante = 0;
+                } else if (estado.rendaExtra > 0) {
+                    valorRestante -= estado.rendaExtra;
+                    estado.rendaExtra = 0;
+                }
+                
+                if (valorRestante > 0) {
+                    if (conta.pagarCom === 'dia20' && estado.saldoDia20 >= valorRestante) {
+                        estado.saldoDia20 -= valorRestante;
+                    } else if (conta.pagarCom === 'dia5' && estado.saldoDia5 >= valorRestante) {
+                        estado.saldoDia5 -= valorRestante;
+                    } else if (estado.saldoDia20 >= valorRestante) {
+                        estado.saldoDia20 -= valorRestante;
+                    } else {
+                        estado.saldoDia5 -= valorRestante;
+                    }
+                }
+                
+                adicionarHistorico(`✅ Pagou ${conta.nome}`, conta.valor, 'saida');
+            } else {
+                // Devolver ao saldo
+                if (conta.pagarCom === 'dia20') {
+                    estado.saldoDia20 += conta.valor;
+                } else {
+                    estado.saldoDia5 += conta.valor;
+                }
+                adicionarHistorico(`↩️ Desmarcou pagamento de ${conta.nome}`, conta.valor, 'entrada');
+            }
+            
+            salvarDados();
+            atualizarInterface();
+        }
+        
+        // ==================== FUNÇÕES DE MODAL ====================
+        
+        function abrirModalNovaConta(pagarCom) {
+            document.getElementById('pagarComNovaConta').value = pagarCom;
+            document.getElementById('modalNovaConta').classList.add('active');
+        }
+        
+        function fecharModal(idModal) {
+            document.getElementById(idModal).classList.remove('active');
+        }
+        
+        function adicionarNovaConta() {
+            const nome = document.getElementById('nomeNovaConta').value.trim();
+            const valor = parseFloat(document.getElementById('valorNovaConta').value);
+            const dia = parseInt(document.getElementById('diaNovaConta').value);
+            const pagarCom = document.getElementById('pagarComNovaConta').value;
+            
+            if (!nome || isNaN(valor) || valor <= 0 || isNaN(dia) || dia < 1 || dia > 31) {
+                alert('❌ Por favor, preencha todos os campos corretamente!');
+                return;
+            }
+            
+            estado.contas.push({
+                id: Date.now(),
+                nome: nome,
+                valor: valor,
+                diaVenc: dia,
+                pagarCom: pagarCom,
+                pago: false,
+                fixa: false
+            });
+            
+            adicionarHistorico(`📝 Cadastrou nova conta: ${nome}`, valor, 'info');
+            
+            document.getElementById('nomeNovaConta').value = '';
+            document.getElementById('valorNovaConta').value = '';
+            document.getElementById('diaNovaConta').value = '';
+            
+            fecharModal('modalNovaConta');
+            salvarDados();
+            atualizarInterface();
+            
+            alert(`✅ Conta "${nome}" adicionada com sucesso!`);
+        }
+        
+        function removerConta(id) {
+            const conta = estado.contas.find(c => c.id === id);
+            if (!conta) return;
+            
+            if (conta.fixa) {
+                alert('❌ Esta é uma conta fixa e não pode ser removida!');
+                return;
+            }
+            
+            if (confirm(`🗑️ Tem certeza que deseja remover "${conta.nome}"?`)) {
+                estado.contas = estado.contas.filter(c => c.id !== id);
+                adicionarHistorico(`🗑️ Removeu conta: ${conta.nome}`, conta.valor, 'info');
+                salvarDados();
+                atualizarInterface();
+            }
+        }
+        
+        function abrirModalGraficos() {
+            if (estado.gastos.length === 0 && estado.contas.filter(c => c.pago).length === 0) {
+                alert('ℹ️ Nenhum gasto registrado ainda!');
+                return;
+            }
+            
+            document.getElementById('modalGraficos').classList.add('active');
+            
+            setTimeout(() => {
+                renderizarGraficos();
+            }, 100);
+        }
+        
+        function abrirModalMesesAnteriores() {
+            document.getElementById('modalMeses').classList.add('active');
+            renderizarMesesAnteriores();
+        }
+        
+        // ==================== FUNÇÕES DE VISUALIZAÇÃO ====================
+        
+        function renderizarGraficos() {
+            const ctx = document.getElementById('chartGastos');
+            if (!ctx) return;
+            
+            // Agrupar gastos por categoria
+            const categorias = {};
+            
+            // 1. Adicionar gastos variáveis
+            estado.gastos.forEach(gasto => {
+                if (!categorias[gasto.categoria]) {
+                    categorias[gasto.categoria] = 0;
+                }
+                categorias[gasto.categoria] += gasto.valor;
+            });
+            
+            // 2. Adicionar contas pagas como categoria "Contas Fixas"
+            const totalContasPagas = estado.contas
+                .filter(c => c.pago)
+                .reduce((sum, c) => sum + c.valor, 0);
+            
+            if (totalContasPagas > 0) {
+                categorias['contas_fixas'] = totalContasPagas;
+            }
+            
+            // Verificar se há dados
+            if (Object.keys(categorias).length === 0) {
+                document.getElementById('resumoCategorias').innerHTML = `
+                    <div class="text-center" style="padding: 2rem; color: #999;">
+                        <p>Nenhum gasto para exibir no gráfico</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const labels = Object.keys(categorias).map(cat => {
+                const nomes = {
+                    alimentacao: 'Alimentação',
+                    transporte: 'Transporte',
+                    saude: 'Saúde',
+                    lazer: 'Lazer',
+                    educacao: 'Educação',
+                    moradia: 'Moradia',
+                    outros: 'Outros',
+                    contas_fixas: 'Contas Fixas'
+                };
+                return nomes[cat] || cat;
+            });
+            
+            const valores = Object.values(categorias);
+            
+            const cores = [
+                '#ff6b35', '#f7931e', '#ffc107', '#28a745',
+                '#17a2b8', '#6f42c1', '#e83e8c', '#dc3545'
+            ];
+            
+            // Destruir gráfico anterior se existir
+            if (window.chartGastosInstance) {
+                window.chartGastosInstance.destroy();
+            }
+            
+            window.chartGastosInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: cores,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return `${label}: R$ ${value.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Renderizar resumo por categoria
+            const resumoHTML = Object.entries(categorias)
+                .sort((a, b) => b[1] - a[1])
+                .map(([cat, valor]) => {
+                    const icones = {
+                        alimentacao: '🍔',
+                        transporte: '🚗',
+                        saude: '💊',
+                        lazer: '🎮',
+                        educacao: '📚',
+                        moradia: '🏠',
+                        outros: '📦',
+                        contas_fixas: '💳'
+                    };
+                    const nomes = {
+                        alimentacao: 'Alimentação',
+                        transporte: 'Transporte',
+                        saude: 'Saúde',
+                        lazer: 'Lazer',
+                        educacao: 'Educação',
+                        moradia: 'Moradia',
+                        outros: 'Outros',
+                        contas_fixas: 'Contas Fixas'
+                    };
+                    const total = valores.reduce((a, b) => a + b, 0);
+                    const percentual = (valor / total * 100).toFixed(1);
+                    
+                    return `
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 10px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 1.5rem; margin-right: 0.5rem;">${icones[cat]}</span>
+                                <strong>${nomes[cat]}</strong>
+                                <span style="margin-left: 0.5rem; color: #666;">(${percentual}%)</span>
+                            </div>
+                            <div style="font-weight: bold; font-size: 1.1rem; color: var(--danger);">
+                                R$ ${valor.toFixed(2)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            
+            document.getElementById('resumoCategorias').innerHTML = resumoHTML;
+        }
+        
+        function renderizarMesesAnteriores() {
+            const container = document.getElementById('listaMeses');
+            
+            if (estado.mesesFechados.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center" style="padding: 3rem; color: #999;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                        <p>Nenhum mês fechado ainda.</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Use o botão "Fechar Mês Atual" para salvar um relatório mensal.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const mesesHTML = estado.mesesFechados.map(mes => {
+                const saldoPositivo = mes.saldo >= 0;
+                return `
+                    <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #e9ecef;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-size: 1.3rem; margin-bottom: 0.25rem;">📅 ${mes.nome}</h3>
+                                <p style="color: #666; font-size: 0.9rem;">Fechado em ${mes.dataFechamento}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: ${saldoPositivo ? 'var(--success)' : 'var(--danger)'};">
+                                    ${saldoPositivo ? '+' : ''} R$ ${mes.saldo.toFixed(2)}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #666;">
+                                    Saldo do mês
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                            <div style="padding: 0.75rem; background: white; border-radius: 8px;">
+                                <div style="color: #666; font-size: 0.85rem; margin-bottom: 0.25rem;">💰 Entradas</div>
+                                <div style="font-weight: bold; color: var(--success);">R$ ${mes.entradas.toFixed(2)}</div>
+                            </div>
+                            <div style="padding: 0.75rem; background: white; border-radius: 8px;">
+                                <div style="color: #666; font-size: 0.85rem; margin-bottom: 0.25rem;">💸 Saídas</div>
+                                <div style="font-weight: bold; color: var(--danger);">R$ ${mes.saidas.toFixed(2)}</div>
+                            </div>
+                            <div style="padding: 0.75rem; background: white; border-radius: 8px;">
+                                <div style="color: #666; font-size: 0.85rem; margin-bottom: 0.25rem;">🏦 Colchão</div>
+                                <div style="font-weight: bold; color: var(--info);">R$ ${mes.colchao.toFixed(2)}</div>
+                            </div>
+                            <div style="padding: 0.75rem; background: white; border-radius: 8px;">
+                                <div style="color: #666; font-size: 0.85rem; margin-bottom: 0.25rem;">📝 Transações</div>
+                                <div style="font-weight: bold;">${mes.transacoes}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = mesesHTML;
+        }
+        
+        // ==================== FUNÇÕES DE RELATÓRIO ====================
+        
+        function fecharMes() {
+            const agora = new Date();
+            const nomeMes = agora.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            
+            if (!confirm(`📊 Deseja fechar o mês de ${nomeMes}?\n\nIsso irá:\n✅ Salvar um resumo completo do mês\n✅ Limpar os gastos variáveis\n✅ Desmarcar contas pagas`)) {
+                return;
+            }
+            
+            // Calcular totais
+            const entradas = estado.historico
+                .filter(h => h.tipo === 'entrada')
+                .reduce((sum, h) => sum + h.valor, 0);
+            
+            const saidas = estado.historico
+                .filter(h => h.tipo === 'saida')
+                .reduce((sum, h) => sum + h.valor, 0);
+            
+            const saldo = entradas - saidas;
+            
+            // Total de gastos = gastos variáveis + contas pagas
+            const totalGastosVariaveis = estado.gastos.reduce((sum, g) => sum + g.valor, 0);
+            const contasPagas = estado.contas.filter(c => c.pago).reduce((sum, c) => sum + c.valor, 0);
+            const totalGastos = totalGastosVariaveis + contasPagas;
+            
+            // Criar resumo do mês
+            const resumoMes = {
+                id: Date.now(),
+                nome: nomeMes,
+                dataFechamento: agora.toLocaleDateString('pt-BR'),
+                entradas: entradas,
+                saidas: saidas,
+                saldo: saldo,
+                colchao: estado.colchao,
+                totalGastos: totalGastos,
+                contasPagas: contasPagas,
+                transacoes: estado.historico.length,
+                gastosPorCategoria: calcularGastosPorCategoria(),
+                historicoCompleto: [...estado.historico],
+                gastosCompleto: [...estado.gastos]
+            };
+            
+            // Adicionar ao histórico de meses
+            estado.mesesFechados.unshift(resumoMes);
+            
+            // Limpar gastos
+            estado.gastos = [];
+            
+            // Desmarcar contas
+            estado.contas.forEach(c => c.pago = false);
+            
+            // Limpar histórico do mês
+            estado.historico = [];
+            
+            salvarDados();
+            atualizarInterface();
+            
+            mostrarRelatorioMes(resumoMes);
+        }
+        
+        function calcularGastosPorCategoria() {
+            const categorias = {};
+            
+            // 1. Gastos variáveis
+            estado.gastos.forEach(g => {
+                if (!categorias[g.categoria]) {
+                    categorias[g.categoria] = 0;
+                }
+                categorias[g.categoria] += g.valor;
+            });
+            
+            // 2. Contas pagas
+            const totalContasPagas = estado.contas
+                .filter(c => c.pago)
+                .reduce((sum, c) => sum + c.valor, 0);
+            
+            if (totalContasPagas > 0) {
+                categorias['Contas Fixas'] = totalContasPagas;
+            }
+            
+            return categorias;
+        }
+        
+        function mostrarRelatorioMes(mes) {
+            const saldoPositivo = mes.saldo >= 0;
+            const categoriasTexto = Object.entries(mes.gastosPorCategoria || {})
+                .map(([cat, valor]) => `  • ${cat}: R$ ${valor.toFixed(2)}`)
+                .join('\n');
+            
+            alert(`
+📊 RELATÓRIO DE ${mes.nome.toUpperCase()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 RESUMO FINANCEIRO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Total de Entradas: R$ ${mes.entradas.toFixed(2)}
+❌ Total de Saídas: R$ ${mes.saidas.toFixed(2)}
+${saldoPositivo ? '📈' : '📉'} Saldo do Mês: R$ ${mes.saldo.toFixed(2)}
+
+💵 SITUAÇÃO FINAL:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏦 Colchão: R$ ${mes.colchao.toFixed(2)}
+
+📋 DETALHES DOS GASTOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💸 Gastos Variáveis: R$ ${(mes.totalGastos - mes.contasPagas).toFixed(2)}
+💳 Contas Pagas: R$ ${mes.contasPagas.toFixed(2)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧮 TOTAL DE GASTOS: R$ ${mes.totalGastos.toFixed(2)}
+📝 Total de Transações: ${mes.transacoes}
+
+📊 GASTOS POR CATEGORIA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${categoriasTexto || '  Nenhum gasto registrado'}
+
+${saldoPositivo ? '🎉 Parabéns! Você teve saldo positivo!' : '⚠️ Atenção! Mais gastos que entradas.'}
+
+✅ Relatório salvo com sucesso!
+            `);
+        }
+        
+        function exportarExcel() {
+            if (estado.historico.length === 0) {
+                alert('ℹ️ Nenhuma transação para exportar!');
+                return;
+            }
+            
+            // Preparar dados para Excel
+            const dados = estado.historico.map(h => ({
+                'Data': h.data,
+                'Descrição': h.desc,
+                'Valor': h.valor,
+                'Tipo': h.tipo === 'entrada' ? 'Entrada' : h.tipo === 'saida' ? 'Saída' : h.tipo === 'colchao' ? 'Colchão' : 'Info'
+            }));
+            
+            // Criar workbook
+            const ws = XLSX.utils.json_to_sheet(dados);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Histórico");
+            
+            // Gerar arquivo
+            const dataExport = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `historico-financeiro-${dataExport}.xlsx`);
+            
+            alert('✅ Arquivo Excel exportado com sucesso!');
+        }
+        
+        // ==================== FUNÇÕES DE ATUALIZAÇÃO DA INTERFACE ====================
+        
+        function verificarVencimentos() {
+            const hoje = new Date();
+            const diaHoje = hoje.getDate();
+            
+            const contasProximas = estado.contas.filter(c => {
+                if (c.pago) return false;
+                
+                const diasAteVencimento = c.diaVenc - diaHoje;
+                return diasAteVencimento >= 0 && diasAteVencimento <= 5;
+            });
+            
+            const containerAlertas = document.getElementById('alertsContainer');
+            
+            if (contasProximas.length > 0) {
+                const alertasHTML = contasProximas.map(conta => {
+                    const diasRestantes = conta.diaVenc - diaHoje;
+                    const urgente = diasRestantes <= 2;
+                    
+                    return `
+                        <div class="alert ${urgente ? 'alert-danger' : 'alert-warning'}">
+                            <span class="alert-icon">${urgente ? '🚨' : '⚠️'}</span>
+                            <div style="flex: 1;">
+                                <strong>${conta.nome}</strong> vence ${diasRestantes === 0 ? 'HOJE' : `em ${diasRestantes} dia(s)`}
+                                <div style="font-size: 0.9rem; margin-top: 0.25rem;">
+                                    Valor: R$ ${conta.valor.toFixed(2)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                containerAlertas.innerHTML = alertasHTML;
+            } else {
+                containerAlertas.innerHTML = '';
+            }
+        }
+        
+        function atualizarInterface() {
+            // Calcular totais
+            const totalDisponivel = estado.saldoDia20 + estado.saldoDia5 + estado.rendaExtra;
+            const contasAPagar = estado.contas.filter(c => !c.pago).reduce((sum, c) => sum + c.valor, 0);
+            const numContasPendentes = estado.contas.filter(c => !c.pago).length;
+            
+            // Atualizar cards
+            document.getElementById('totalDisponivel').textContent = `R$ ${totalDisponivel.toFixed(2)}`;
+            document.getElementById('saldoDia20').textContent = `R$ ${estado.saldoDia20.toFixed(2)}`;
+            document.getElementById('saldoDia5').textContent = `R$ ${estado.saldoDia5.toFixed(2)}`;
+            document.getElementById('rendaExtra').textContent = `R$ ${estado.rendaExtra.toFixed(2)}`;
+            document.getElementById('colchao').textContent = `R$ ${estado.colchao.toFixed(2)}`;
+            document.getElementById('contasAPagar').textContent = `R$ ${contasAPagar.toFixed(2)}`;
+            document.getElementById('contasPendentes').textContent = `${numContasPendentes} pendente${numContasPendentes !== 1 ? 's' : ''}`;
+            
+            // Renderizar contas
+            renderizarContas();
+            
+            // Renderizar gastos
+            renderizarGastos();
+            
+            // Renderizar histórico
+            renderizarHistorico();
+            
+            // Verificar vencimentos
+            verificarVencimentos();
+        }
+        
+        function renderizarContas() {
+            const contasDia20 = estado.contas.filter(c => c.pagarCom === 'dia20');
+            const contasDia5 = estado.contas.filter(c => c.pagarCom === 'dia5');
+            
+            const hoje = new Date().getDate();
+            
+            const criarItemConta = (conta) => {
+                const atrasada = !conta.pago && conta.diaVenc < hoje;
+                const proxima = !conta.pago && (conta.diaVenc - hoje) <= 3 && (conta.diaVenc - hoje) >= 0;
+                
+                return `
+                    <div class="bill-item ${conta.pago ? 'paid' : ''} ${atrasada ? 'overdue' : ''}" onclick="toggleConta(${conta.id})">
+                        <div class="bill-info">
+                            <div class="bill-name">
+                                ${conta.pago ? '✅' : atrasada ? '⚠️' : proxima ? '🔔' : '⏳'} ${conta.nome}
+                                ${!conta.fixa ? '<span class="badge badge-info" style="margin-left: 0.5rem;">PERSONALIZADA</span>' : ''}
+                            </div>
+                            <div class="bill-details">
+                                Vence dia ${conta.diaVenc}
+                                ${atrasada ? ' • <strong style="color: var(--danger);">ATRASADA</strong>' : ''}
+                                ${proxima ? ' • <strong style="color: var(--warning);">VENCE EM BREVE</strong>' : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="bill-value">R$ ${conta.valor.toFixed(2)}</div>
+                            ${!conta.fixa ? `<button class="btn-danger btn-small" onclick="event.stopPropagation(); removerConta(${conta.id})" style="width: auto;">🗑️</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            };
+            
+            document.getElementById('contasDia20').innerHTML = contasDia20.length > 0 
+                ? contasDia20.map(criarItemConta).join('')
+                : '<p style="text-align: center; color: #999; padding: 2rem;">Nenhuma conta neste grupo</p>';
+            
+            document.getElementById('contasDia5').innerHTML = contasDia5.length > 0
+                ? contasDia5.map(criarItemConta).join('')
+                : '<p style="text-align: center; color: #999; padding: 2rem;">Nenhuma conta neste grupo</p>';
+        }
+        
+        function renderizarGastos() {
+            const secaoGastos = document.getElementById('secaoGastos');
+            const listaGastos = document.getElementById('listaGastos');
+            
+            // Pegar TODOS os gastos: variáveis + contas pagas
+            const todosGastos = [];
+            
+            // 1. Adicionar gastos variáveis
+            estado.gastos.forEach(gasto => {
+                todosGastos.push({
+                    id: gasto.id,
+                    tipo: 'variavel',
+                    icon: gasto.icon,
+                    descricao: gasto.descricao,
+                    categoria: gasto.categoria,
+                    valor: gasto.valor,
+                    data: gasto.data
+                });
+            });
+            
+            // 2. Adicionar contas pagas
+            estado.contas.forEach(conta => {
+                if (conta.pago) {
+                    todosGastos.push({
+                        id: conta.id,
+                        tipo: 'conta',
+                        icon: '💳',
+                        descricao: conta.nome,
+                        categoria: 'Conta Fixa',
+                        valor: conta.valor,
+                        data: new Date().toLocaleDateString('pt-BR')
+                    });
+                }
+            });
+            
+            // Se não houver gastos, ocultar seção
+            if (todosGastos.length === 0) {
+                secaoGastos.style.display = 'none';
+                return;
+            }
+            
+            secaoGastos.style.display = 'block';
+            
+            // Ordenar por ID (mais recente primeiro)
+            todosGastos.sort((a, b) => b.id - a.id);
+            
+            // Renderizar todos os gastos
+            const gastosHTML = todosGastos.map(gasto => {
+                const bgColor = gasto.tipo === 'conta' ? '#e3f2fd' : '#fff3cd';
+                const borderColor = gasto.tipo === 'conta' ? '#90caf9' : '#ffeaa7';
+                
+                return `
+                    <div class="expense-item" style="background: ${bgColor}; border-color: ${borderColor};">
+                        <div>
+                            <div style="font-weight: 600; font-size: 1.1rem;">
+                                ${gasto.icon} ${gasto.descricao}
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem;">
+                                ${gasto.data} • ${gasto.categoria}
+                            </div>
+                        </div>
+                        <div style="font-weight: bold; font-size: 1.3rem; color: var(--danger);">
+                            R$ ${gasto.valor.toFixed(2)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            listaGastos.innerHTML = gastosHTML;
+            
+            // Calcular e atualizar total
+            const totalGastos = todosGastos.reduce((sum, g) => sum + g.valor, 0);
+            document.getElementById('totalGastos').textContent = `R$ ${totalGastos.toFixed(2)}`;
+        }
+        
+        function renderizarHistorico() {
+            const historicoContainer = document.getElementById('historico');
+            
+            if (estado.historico.length === 0) {
+                historicoContainer.innerHTML = `
+                    <div class="text-center" style="padding: 3rem; color: #999;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                        <p>Nenhuma transação registrada ainda.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const historicoHTML = [...estado.historico]
+                .reverse()
+                .map(item => {
+                    const cor = item.tipo === 'entrada' ? 'var(--success)' : 
+                                item.tipo === 'colchao' ? 'var(--info)' : 
+                                item.tipo === 'info' ? '#6c757d' : 'var(--danger)';
+                    
+                    const sinal = item.tipo === 'entrada' ? '+' : 
+                                 item.tipo === 'saida' ? '-' : '';
+                    
+                    return `
+                        <div class="history-item ${item.tipo}">
+                            <div class="history-header">
+                                <div class="history-desc">${item.desc}</div>
+                                <div class="history-value" style="color: ${cor};">
+                                    ${sinal} R$ ${item.valor.toFixed(2)}
+                                </div>
+                            </div>
+                            <div class="history-date">${item.data}</div>
+                        </div>
+                    `;
+                }).join('');
+            
+            historicoContainer.innerHTML = historicoHTML;
+        }
+        
+        // ==================== INICIALIZAÇÃO ====================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando sistema financeiro...');
+            
+            // Carregar config Firebase
+            carregarConfigFirebase();
+            
+            // Aguardar um pouco para Firebase conectar
+            setTimeout(() => {
+                carregarDados();
+                
+                // Ocultar loading e mostrar app
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                
+                console.log('✅ Sistema carregado com sucesso!');
+                
+                // Se Firebase não configurado, mostrar alerta
+                if (!firebaseConfigured) {
+                    atualizarStatusSync(false, 'Clique em "Configurar Firebase" para sincronizar');
+                }
+            }, 1000);
+        });
+        
+        // Fechar modais ao clicar fora
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+        
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
