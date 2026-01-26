@@ -934,6 +934,16 @@
         let firebaseApp = null;
         let database = null;
         let firebaseConfigured = false;
+        // Configuração automática do Firebase
+const firebaseConfigPadrao = {
+    apiKey: "AIzaSyAkPDC24m8w4LfsxhhFiMrFNFTOeSYFmsQ",
+    authDomain: "controle-financeiro-app-ce215.firebaseapp.com",
+    databaseURL: "https://controle-financeiro-app-ce215-default-rtdb.firebaseio.com",
+    projectId: "controle-financeiro-app-ce215",
+    storageBucket: "controle-financeiro-app-ce215.firebasestorage.app",
+    messagingSenderId: "564515008503",
+    appId: "1:564515008503:web:712440580268dffa4a48f2"
+};
         
         // Estado inicial com SEUS DADOS ATUAIS
         const estadoInicial = {
@@ -1039,16 +1049,23 @@
         }
         
         function carregarConfigFirebase() {
-            const config = localStorage.getItem('firebaseConfig');
-            if (config) {
-                try {
-                    const configObj = JSON.parse(config);
-                    inicializarFirebase(configObj);
-                } catch (error) {
-                    console.error('❌ Erro ao carregar config Firebase:', error);
-                }
-            }
+    // Primeiro tenta carregar config salva
+    const config = localStorage.getItem('firebaseConfig');
+    if (config) {
+        try {
+            const configObj = JSON.parse(config);
+            inicializarFirebase(configObj);
+            return;
+        } catch (error) {
+            console.error('❌ Erro ao carregar config Firebase:', error);
         }
+    }
+    
+    // Se não houver config salva, usa a padrão automaticamente
+    console.log('🔧 Usando configuração padrão do Firebase');
+    inicializarFirebase(firebaseConfigPadrao);
+    localStorage.setItem('firebaseConfig', JSON.stringify(firebaseConfigPadrao));
+}}
         
         function abrirModalConfigFirebase() {
             // Carregar valores salvos se existirem
