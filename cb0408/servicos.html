@@ -213,6 +213,13 @@
         .service-detail { font-size: 0.9rem; color: #666; }
         .service-detail strong { color: #333; }
         
+        .service-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
         .payment-info {
             background: #f0f9ff;
             border: 2px solid #06b6d4;
@@ -402,10 +409,10 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-icon">💰</span>
-                    <span class="card-title">Faturamento Bruto (Mês)</span>
+                    <span class="card-title">Faturamento MEI (Mês)</span>
                 </div>
                 <div class="card-value" style="color: var(--primary);" id="faturamentoMes">R$ 0,00</div>
-                <div class="card-subtitle">Base para nota MEI</div>
+                <div class="card-subtitle">Pagamentos recebidos</div>
             </div>
             
             <div class="card">
@@ -519,12 +526,22 @@
                 <input type="number" id="valorServico" placeholder="0.00" step="0.01">
             </div>
             
+            <div class="form-group">
+                <label>Status Inicial *</label>
+                <select id="statusInicial">
+                    <option value="orcamento">📝 Orçamento (negociando)</option>
+                    <option value="agendado">📅 Agendado (confirmado)</option>
+                    <option value="producao">🎵 Em Produção (trabalhando)</option>
+                    <option value="entregue">✅ Entregue (aguardando pagamento)</option>
+                </select>
+            </div>
+            
             <div class="alert alert-info">
                 <span class="alert-icon">💡</span>
                 <div>
-                    <strong>Pagamento Parcial?</strong>
+                    <strong>Cliente já pagou algo?</strong>
                     <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                        Se o cliente vai pagar por partes (ex: 50% antes), marque abaixo quanto foi pago agora.
+                        Se sim, informe abaixo. Será adicionado automaticamente no Sistema Financeiro!
                     </p>
                 </div>
             </div>
@@ -572,6 +589,16 @@
             </div>
             
             <input type="hidden" id="editId">
+            
+            <div class="form-group">
+                <label>Status do Serviço</label>
+                <select id="editStatus">
+                    <option value="orcamento">📝 Orçamento</option>
+                    <option value="agendado">📅 Agendado</option>
+                    <option value="producao">🎵 Em Produção</option>
+                    <option value="entregue">✅ Entregue</option>
+                </select>
+            </div>
             
             <div class="form-group">
                 <label>Cliente</label>
@@ -646,7 +673,7 @@
                 <div>
                     <strong>Cliente pagou?</strong>
                     <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                        Ao registrar, o valor será adicionado automaticamente no Sistema Financeiro como Renda Extra!
+                        O valor será adicionado automaticamente no Sistema Financeiro como Renda Extra!
                     </p>
                 </div>
             </div>
@@ -659,8 +686,11 @@
             </div>
             
             <div class="form-group">
-                <label>Data do Pagamento</label>
+                <label>Data do Recebimento *</label>
                 <input type="date" id="dataPagamento">
+                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                    ⚠️ Importante: Esta data determina o mês do faturamento MEI!
+                </small>
             </div>
             
             <div class="grid-2">
@@ -710,6 +740,15 @@
             'outro': 'Outro'
         };
         
+        const statusNomes = {
+            'orcamento': '📝 Orçamento',
+            'agendado': '📅 Agendado',
+            'producao': '🎵 Em Produção',
+            'entregue': '✅ Entregue',
+            'parcial': '💰 Parcial',
+            'pago': '✅ Pago'
+        };
+        
         // ==================== FIREBASE ====================
         
         function inicializarFirebase() {
@@ -720,7 +759,6 @@
                 
                 atualizarStatusSync(true, '☁️ Conectado - Sincronização Ativa');
                 
-                // Escutar mudanças
                 database.ref('servicos-mei').on('value', (snapshot) => {
                     const dados = snapshot.val();
                     if (dados) {
@@ -729,7 +767,6 @@
                     }
                 });
                 
-                // Fazer upload inicial se não houver dados
                 database.ref('servicos-mei').once('value', (snapshot) => {
                     if (!snapshot.exists()) {
                         salvarNaNuvem();
@@ -780,7 +817,6 @@
             }
             
             try {
-                // Buscar estado atual do financeiro
                 database.ref('financeiro').once('value', (snapshot) => {
                     const financeiro = snapshot.val() || {
                         saldoDia20: 0,
@@ -793,10 +829,8 @@
                         mesesFechados: []
                     };
                     
-                    // Adicionar valor à renda extra
                     financeiro.rendaExtra += valor;
                     
-                    // Adicionar no histórico
                     financeiro.historico.push({
                         id: Date.now(),
                         data: new Date().toLocaleString('pt-BR'),
@@ -805,7 +839,6 @@
                         tipo: 'entrada'
                     });
                     
-                    // Salvar de volta
                     database.ref('financeiro').set(financeiro);
                     
                     console.log(`✅ Renda extra adicionada: R$ ${valor.toFixed(2)}`);
@@ -818,11 +851,22 @@
         
         // ==================== SERVIÇOS ====================
         
+        function calcularStatusServico(servico) {
+            if (servico.valorPendente === 0 && servico.valorTotal > 0) {
+                return 'pago';
+            } else if (servico.valorPago > 0 && servico.valorPendente > 0) {
+                return 'parcial';
+            } else {
+                return servico.status || 'entregue';
+            }
+        }
+        
         function abrirModalNovoServico() {
             document.getElementById('nomeCliente').value = '';
             document.getElementById('contatoCliente').value = '';
             document.getElementById('tipoServico').value = 'producao-completa';
             document.getElementById('valorServico').value = '';
+            document.getElementById('statusInicial').value = 'orcamento';
             document.getElementById('valorPago').value = '';
             document.getElementById('dataServico').value = '';
             document.getElementById('prazoEntrega').value = '';
@@ -835,6 +879,7 @@
             const contato = document.getElementById('contatoCliente').value.trim();
             const tipo = document.getElementById('tipoServico').value;
             const valorTotal = parseFloat(document.getElementById('valorServico').value);
+            const status = document.getElementById('statusInicial').value;
             const valorPago = parseFloat(document.getElementById('valorPago').value) || 0;
             const dataServico = document.getElementById('dataServico').value;
             const prazo = document.getElementById('prazoEntrega').value;
@@ -858,6 +903,7 @@
                 valorTotal: valorTotal,
                 valorPago: valorPago,
                 valorPendente: valorTotal - valorPago,
+                status: status,
                 pagamentos: [],
                 dataEntrada: new Date().toLocaleDateString('pt-BR'),
                 dataServico: dataServico,
@@ -865,16 +911,15 @@
                 observacoes: obs
             };
             
-            // Se já pagou algo, registrar pagamento
             if (valorPago > 0) {
+                const dataPagamento = new Date().toLocaleDateString('pt-BR');
                 novoServico.pagamentos.push({
                     id: Date.now(),
                     valor: valorPago,
-                    data: new Date().toLocaleDateString('pt-BR'),
+                    data: dataPagamento,
                     hora: new Date().toLocaleTimeString('pt-BR')
                 });
                 
-                // 🔥 INTEGRAÇÃO: Adicionar no sistema financeiro
                 const descricao = `🎵 ${nome} - ${tiposServicoNomes[tipo]}${valorPago < valorTotal ? ' (Sinal)' : ''}`;
                 adicionarRendaExtraNoFinanceiro(valorPago, descricao);
             }
@@ -900,6 +945,7 @@
             servicoEmEdicao = servico;
             
             document.getElementById('editId').value = servico.id;
+            document.getElementById('editStatus').value = servico.status || 'entregue';
             document.getElementById('editNomeCliente').value = servico.cliente;
             document.getElementById('editContatoCliente').value = servico.contato || '';
             document.getElementById('editTipoServico').value = servico.tipo;
@@ -908,9 +954,9 @@
             document.getElementById('editPrazoEntrega').value = servico.prazoEntrega || '';
             document.getElementById('editObservacoes').value = servico.observacoes || '';
             
-            // Mostrar info de pagamento
+            const statusAtual = calcularStatusServico(servico);
             const paymentInfoHTML = `
-                <div class="payment-info ${servico.valorPendente === 0 ? 'completo' : 'parcial'}">
+                <div class="payment-info ${statusAtual === 'pago' ? 'completo' : statusAtual === 'parcial' ? 'parcial' : ''}">
                     <div class="payment-row">
                         <span>Valor Total:</span>
                         <strong>R$ ${servico.valorTotal.toFixed(2)}</strong>
@@ -948,6 +994,7 @@
             const servico = estado.servicos.find(s => s.id === id);
             if (!servico) return;
             
+            servico.status = document.getElementById('editStatus').value;
             servico.cliente = document.getElementById('editNomeCliente').value.trim();
             servico.contato = document.getElementById('editContatoCliente').value.trim();
             servico.tipo = document.getElementById('editTipoServico').value;
@@ -1000,16 +1047,22 @@
                 return;
             }
             
+            if (!dataPag) {
+                alert('❌ Data do recebimento é obrigatória!');
+                return;
+            }
+            
             if (valorNovo > servicoEmEdicao.valorPendente) {
                 alert(`❌ Valor maior que o pendente!\n\nPendente: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
                 return;
             }
             
-            // Registrar pagamento
+            const dataPagamentoFormatada = new Date(dataPag + 'T00:00:00').toLocaleDateString('pt-BR');
+            
             const novoPagamento = {
                 id: Date.now(),
                 valor: valorNovo,
-                data: dataPag ? new Date(dataPag + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+                data: dataPagamentoFormatada,
                 hora: new Date().toLocaleTimeString('pt-BR')
             };
             
@@ -1021,7 +1074,6 @@
             servicoEmEdicao.valorPago += valorNovo;
             servicoEmEdicao.valorPendente -= valorNovo;
             
-            // 🔥 INTEGRAÇÃO: Adicionar no sistema financeiro
             const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
             const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
             adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
@@ -1053,7 +1105,6 @@
         function verificarAlertas() {
             const alertas = [];
             
-            // Serviços pendentes de pagamento
             const pendentes = estado.servicos.filter(s => s.valorPendente > 0 && s.valorPago > 0);
             if (pendentes.length > 0) {
                 const total = pendentes.reduce((sum, s) => sum + s.valorPendente, 0);
@@ -1063,13 +1114,12 @@
                 });
             }
             
-            // Serviços entregues sem pagamento
-            const entregues = estado.servicos.filter(s => s.valorPago === 0 && s.valorTotal > 0);
+            const entregues = estado.servicos.filter(s => s.valorPago === 0 && s.status === 'entregue');
             if (entregues.length > 0) {
                 const total = entregues.reduce((sum, s) => sum + s.valorTotal, 0);
                 alertas.push({
                     tipo: 'info',
-                    texto: `📋 ${entregues.length} serviço(s) SEM pagamento ainda (Total: R$ ${total.toFixed(2)})`
+                    texto: `📋 ${entregues.length} serviço(s) entregue(s) SEM pagamento (Total: R$ ${total.toFixed(2)})`
                 });
             }
             
@@ -1091,22 +1141,31 @@
             const mesAtual = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
             
-            const servicosDoMes = estado.servicos.filter(s => {
-                const data = new Date(s.dataEntrada.split('/').reverse().join('-'));
-                return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+            // CORRIGIDO: Faturamento MEI pela data de RECEBIMENTO
+            let faturamentoMes = 0;
+            let totalRecebidoMes = 0;
+            
+            estado.servicos.forEach(s => {
+                if (s.pagamentos && s.pagamentos.length > 0) {
+                    s.pagamentos.forEach(p => {
+                        const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
+                        if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
+                            faturamentoMes += p.valor;
+                            totalRecebidoMes += p.valor;
+                        }
+                    });
+                }
             });
             
-            const faturamentoBruto = servicosDoMes.reduce((sum, s) => sum + s.valorTotal, 0);
             const totalReceber = estado.servicos.reduce((sum, s) => sum + s.valorPendente, 0);
             const qtdPendente = estado.servicos.filter(s => s.valorPendente > 0).length;
-            const totalRecebido = servicosDoMes.reduce((sum, s) => sum + s.valorPago, 0);
-            const qtdPago = servicosDoMes.filter(s => s.valorPendente === 0 && s.valorTotal > 0).length;
-            const servicosAtivos = estado.servicos.filter(s => s.valorPendente > 0).length;
+            const qtdPago = estado.servicos.filter(s => s.valorPendente === 0 && s.valorTotal > 0).length;
+            const servicosAtivos = estado.servicos.filter(s => s.valorPendente > 0 || (s.status !== 'pago' && s.status !== 'entregue')).length;
             
-            document.getElementById('faturamentoMes').textContent = `R$ ${faturamentoBruto.toFixed(2)}`;
+            document.getElementById('faturamentoMes').textContent = `R$ ${faturamentoMes.toFixed(2)}`;
             document.getElementById('totalReceber').textContent = `R$ ${totalReceber.toFixed(2)}`;
             document.getElementById('qtdPendente').textContent = `${qtdPendente} serviço${qtdPendente !== 1 ? 's' : ''}`;
-            document.getElementById('totalRecebido').textContent = `R$ ${totalRecebido.toFixed(2)}`;
+            document.getElementById('totalRecebido').textContent = `R$ ${totalRecebidoMes.toFixed(2)}`;
             document.getElementById('qtdPago').textContent = `${qtdPago} pago${qtdPago !== 1 ? 's' : ''}`;
             document.getElementById('servicosAtivos').textContent = servicosAtivos;
         }
@@ -1114,15 +1173,11 @@
         function renderizarServicos() {
             let servicos = estado.servicos;
             
-            if (filtroAtual === 'parcial') {
-                servicos = servicos.filter(s => s.valorPago > 0 && s.valorPendente > 0);
-            } else if (filtroAtual === 'pago') {
-                servicos = servicos.filter(s => s.valorPendente === 0 && s.valorTotal > 0);
-            } else if (filtroAtual === 'entregue') {
-                servicos = servicos.filter(s => s.valorPago === 0);
-            } else if (filtroAtual !== 'todos') {
-                // Manter compatibilidade com outros filtros se houver
-                servicos = servicos;
+            if (filtroAtual !== 'todos') {
+                servicos = servicos.filter(s => {
+                    const statusAtual = calcularStatusServico(s);
+                    return statusAtual === filtroAtual;
+                });
             }
             
             servicos.sort((a, b) => b.id - a.id);
@@ -1140,16 +1195,14 @@
             }
             
             container.innerHTML = servicos.map(s => {
-                const statusClass = s.valorPendente === 0 ? 'pago' : s.valorPago > 0 ? 'parcial' : 'entregue';
-                const statusBadge = s.valorPendente === 0 ? 'pago' : s.valorPago > 0 ? 'parcial' : 'entregue';
-                const statusText = s.valorPendente === 0 ? '💰 Pago' : s.valorPago > 0 ? '💰 Parcial' : '✅ A Receber';
+                const statusAtual = calcularStatusServico(s);
                 
                 return `
-                    <div class="service-item ${statusClass}" onclick="abrirModalEditarServico(${s.id})">
+                    <div class="service-item ${statusAtual}" onclick="abrirModalEditarServico(${s.id})">
                         <div class="service-header">
                             <div>
                                 <div class="service-title">${s.cliente}</div>
-                                <span class="badge badge-${statusBadge}">${statusText}</span>
+                                <span class="badge badge-${statusAtual}">${statusNomes[statusAtual]}</span>
                             </div>
                             <div class="service-value">R$ ${s.valorTotal.toFixed(2)}</div>
                         </div>
@@ -1164,13 +1217,13 @@
                             ${s.contato ? `<div class="service-detail"><strong>Contato:</strong> ${s.contato}</div>` : ''}
                         </div>
                         
-                        ${s.valorPago > 0 || s.valorPendente > 0 ? `
-                            <div class="payment-info ${statusClass}">
+                        ${(statusAtual === 'parcial' || statusAtual === 'pago') ? `
+                            <div class="payment-info ${statusAtual}">
                                 <div class="payment-row">
                                     <span>Pago:</span>
                                     <strong style="color: var(--success);">R$ ${s.valorPago.toFixed(2)}</strong>
                                 </div>
-                                ${s.valorPendente > 0 ? `
+                                ${statusAtual === 'parcial' ? `
                                     <div class="payment-row">
                                         <span>Pendente:</span>
                                         <strong style="color: var(--danger);">R$ ${s.valorPendente.toFixed(2)}</strong>
@@ -1196,30 +1249,32 @@
             const mesAtual = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
             
-            const servicosDoMes = estado.servicos.filter(s => {
-                const data = new Date(s.dataEntrada.split('/').reverse().join('-'));
-                return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+            const pagamentos = [];
+            
+            estado.servicos.forEach(s => {
+                if (s.pagamentos && s.pagamentos.length > 0) {
+                    s.pagamentos.forEach(p => {
+                        const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
+                        if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
+                            pagamentos.push({
+                                'Data Recebimento': p.data,
+                                'Cliente': s.cliente,
+                                'Serviço': tiposServicoNomes[s.tipo],
+                                'Valor': p.valor
+                            });
+                        }
+                    });
+                }
             });
             
-            if (servicosDoMes.length === 0) {
-                alert('ℹ️ Nenhum serviço neste mês!');
+            if (pagamentos.length === 0) {
+                alert('ℹ️ Nenhum pagamento recebido neste mês!');
                 return;
             }
             
-            const dados = servicosDoMes.map(s => ({
-                'Data': s.dataEntrada,
-                'Cliente': s.cliente,
-                'Serviço': tiposServicoNomes[s.tipo],
-                'Valor Total': s.valorTotal,
-                'Pago': s.valorPago,
-                'Pendente': s.valorPendente,
-                'Status': s.valorPendente === 0 ? 'Pago' : s.valorPago > 0 ? 'Parcial' : 'A Receber',
-                'Contato': s.contato || '-'
-            }));
-            
-            const ws = XLSX.utils.json_to_sheet(dados);
+            const ws = XLSX.utils.json_to_sheet(pagamentos);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Faturamento");
+            XLSX.utils.book_append_sheet(wb, ws, "Faturamento MEI");
             
             const mesNome = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             XLSX.writeFile(wb, `faturamento-mei-${mesNome}.xlsx`);
@@ -1280,7 +1335,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Iniciando Sistema de Serviços MEI...');
             
-            // Inicializar Firebase automaticamente
             inicializarFirebase();
             
             setTimeout(() => {
@@ -1291,14 +1345,12 @@
             }, 1500);
         });
         
-        // Fechar modais ao clicar fora
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) modal.classList.remove('active');
             });
         });
         
-        // ESC para fechar modais
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal').forEach(modal => {
