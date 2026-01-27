@@ -1,1628 +1,1495 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎵 Gestão de Serviços - MEI v2.1</title>
+
+```
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    :root {
+        --primary: #8b5cf6;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #06b6d4;
+    }
     
-    <!-- SheetJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        min-height: 100vh;
+        padding: 1rem;
+    }
     
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --primary: #8b5cf6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #06b6d4;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            min-height: 100vh;
-            padding: 1rem;
-        }
-        
-        .container { max-width: 1600px; margin: 0 auto; }
-        
-        h1 {
-            color: white;
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .subtitle {
-            color: rgba(255,255,255,0.95);
-            text-align: center;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-        
-        .sync-status {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            text-align: center;
-            padding: 0.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        .sync-status.connected { background: rgba(16, 185, 129, 0.3); }
-        
-        .dashboard-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-        
-        .card-icon { font-size: 2rem; }
-        .card-title { font-size: 0.9rem; color: #666; font-weight: 500; }
-        .card-value { font-size: 2rem; font-weight: bold; margin-top: 0.5rem; }
-        .card-subtitle { font-size: 0.85rem; color: #999; margin-top: 0.25rem; }
-        
-        .section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .form-group { margin-bottom: 1rem; }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #555;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-            font-family: inherit;
-        }
-        
-        textarea { resize: vertical; min-height: 80px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
-        
-        button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-success { background: var(--success); color: white; width: 100%; }
-        .btn-danger { background: var(--danger); color: white; width: 100%; }
-        .btn-warning { background: var(--warning); color: white; width: 100%; }
-        .btn-info { background: var(--info); color: white; width: 100%; }
-        .btn-secondary { background: #6c757d; color: white; width: 100%; }
-        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; width: auto; }
-        
-        .service-item {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            padding: 1.25rem;
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        
-        .service-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .service-item.orcamento { border-left: 5px solid #6c757d; }
-        .service-item.agendado { border-left: 5px solid #06b6d4; }
-        .service-item.producao { border-left: 5px solid #f59e0b; }
-        .service-item.entregue { border-left: 5px solid #8b5cf6; }
-        .service-item.parcial { border-left: 5px solid #ec4899; background: #fef3f8; }
-        .service-item.pago { border-left: 5px solid #10b981; background: #f0fdf4; opacity: 0.8; }
-        
-        .service-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.75rem;
-        }
-        
-        .service-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
-        .service-value { font-size: 1.3rem; font-weight: bold; color: var(--primary); }
-        
-        .service-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid #e9ecef;
-        }
-        
-        .service-detail { font-size: 0.9rem; color: #666; }
-        .service-detail strong { color: #333; }
-        
-        .service-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .payment-info {
-            background: #f0f9ff;
-            border: 2px solid #06b6d4;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-top: 0.75rem;
-        }
-        
-        .payment-info.parcial { background: #fef3f8; border-color: #ec4899; }
-        .payment-info.completo { background: #f0fdf4; border-color: #10b981; }
-        
-        .payment-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .payment-row:last-child {
-            border-bottom: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .badge-orcamento { background: #f1f5f9; color: #475569; }
-        .badge-agendado { background: #cffafe; color: #155e75; }
-        .badge-producao { background: #fef3c7; color: #92400e; }
-        .badge-entregue { background: #ede9fe; color: #5b21b6; }
-        .badge-parcial { background: #fce7f3; color: #9f1239; }
-        .badge-pago { background: #d1fae5; color: #065f46; }
-        
-        .alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .alert-warning { background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; }
-        .alert-info { background: #dbeafe; border: 2px solid #3b82f6; color: #1e3a8a; }
-        .alert-icon { font-size: 1.5rem; }
-        
-        .tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #e9ecef;
-            flex-wrap: wrap;
-        }
-        
-        .tab {
-            padding: 0.75rem 1.5rem;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: auto;
-        }
-        
-        .tab:hover { color: var(--primary); transform: none; box-shadow: none; }
-        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        
-        .modal.active { display: flex; }
-        
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            max-width: 700px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .modal-title { font-size: 1.5rem; font-weight: 600; }
-        
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            width: auto;
-            padding: 0;
-            color: #999;
-        }
-        
-        .close-modal:hover { color: #333; transform: none; box-shadow: none; }
-        
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-        }
-        
-        .hidden { display: none !important; }
-        .text-center { text-align: center; }
-        .mb-2 { margin-bottom: 1rem; }
-        .mt-2 { margin-top: 1rem; }
-        
-        .loading { text-align: center; padding: 3rem; color: white; }
-        
-        .spinner {
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .footer { text-align: center; color: white; padding: 2rem 1rem; margin-top: 2rem; }
-        
-        .date-highlight {
-            background: #e3f2fd;
-            padding: 0.5rem;
-            border-radius: 6px;
-            border-left: 3px solid #2196F3;
-            margin: 0.25rem 0;
-        }
-        
-        @media (max-width: 768px) {
-            h1 { font-size: 2rem; }
-            .dashboard-cards, .grid-2, .grid-3 { grid-template-columns: 1fr; }
-        }
-    </style>
+    .container { max-width: 1600px; margin: 0 auto; }
+    
+    h1 {
+        color: white;
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .subtitle {
+        color: rgba(255,255,255,0.95);
+        text-align: center;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .sync-status {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        text-align: center;
+        padding: 0.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .sync-status.connected { background: rgba(16, 185, 129, 0.3); }
+    
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .card-icon { font-size: 2rem; }
+    .card-title { font-size: 0.9rem; color: #666; font-weight: 500; }
+    .card-value { font-size: 2rem; font-weight: bold; margin-top: 0.5rem; }
+    .card-subtitle { font-size: 0.85rem; color: #999; margin-top: 0.25rem; }
+    
+    .section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-group { margin-bottom: 1rem; }
+    
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #555;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+        font-family: inherit;
+    }
+    
+    textarea { resize: vertical; min-height: 80px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    
+    button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary { background: var(--primary); color: white; width: 100%; }
+    .btn-success { background: var(--success); color: white; width: 100%; }
+    .btn-danger { background: var(--danger); color: white; width: 100%; }
+    .btn-warning { background: var(--warning); color: white; width: 100%; }
+    .btn-info { background: var(--info); color: white; width: 100%; }
+    .btn-secondary { background: #6c757d; color: white; width: 100%; }
+    .btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; width: auto; }
+    
+    .service-item {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .service-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .service-item.orcamento { border-left: 5px solid #6c757d; }
+    .service-item.agendado { border-left: 5px solid #06b6d4; }
+    .service-item.producao { border-left: 5px solid #f59e0b; }
+    .service-item.entregue { border-left: 5px solid #8b5cf6; }
+    .service-item.parcial { border-left: 5px solid #ec4899; background: #fef3f8; }
+    .service-item.pago { border-left: 5px solid #10b981; background: #f0fdf4; opacity: 0.8; }
+    
+    .service-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    
+    .service-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
+    .service-value { font-size: 1.3rem; font-weight: bold; color: var(--primary); }
+    
+    .service-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .service-detail { font-size: 0.9rem; color: #666; }
+    .service-detail strong { color: #333; }
+    
+    .service-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .payment-info {
+        background: #f0f9ff;
+        border: 2px solid #06b6d4;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 0.75rem;
+    }
+    
+    .payment-info.parcial { background: #fef3f8; border-color: #ec4899; }
+    .payment-info.completo { background: #f0fdf4; border-color: #10b981; }
+    
+    .payment-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .payment-row:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .badge-orcamento { background: #f1f5f9; color: #475569; }
+    .badge-agendado { background: #cffafe; color: #155e75; }
+    .badge-producao { background: #fef3c7; color: #92400e; }
+    .badge-entregue { background: #ede9fe; color: #5b21b6; }
+    .badge-parcial { background: #fce7f3; color: #9f1239; }
+    .badge-pago { background: #d1fae5; color: #065f46; }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .alert-warning { background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; }
+    .alert-info { background: #dbeafe; border: 2px solid #3b82f6; color: #1e3a8a; }
+    .alert-icon { font-size: 1.5rem; }
+    
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+        flex-wrap: wrap;
+    }
+    
+    .tab {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: auto;
+    }
+    
+    .tab:hover { color: var(--primary); transform: none; box-shadow: none; }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .modal.active { display: flex; }
+    
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        max-width: 700px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .modal-title { font-size: 1.5rem; font-weight: 600; }
+    
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        width: auto;
+        padding: 0;
+        color: #999;
+    }
+    
+    .close-modal:hover { color: #333; transform: none; box-shadow: none; }
+    
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+    
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mt-2 { margin-top: 1rem; }
+    
+    .loading { text-align: center; padding: 3rem; color: white; }
+    
+    .spinner {
+        border: 4px solid rgba(255,255,255,0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .footer { text-align: center; color: white; padding: 2rem 1rem; margin-top: 2rem; }
+    
+    .date-highlight {
+        background: #e3f2fd;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border-left: 3px solid #2196F3;
+        margin: 0.25rem 0;
+    }
+    
+    @media (max-width: 768px) {
+        h1 { font-size: 2rem; }
+        .dashboard-cards, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+</style>
+```
+
 </head>
 <body>
     <div id="loadingScreen" class="loading">
         <div class="spinner"></div>
         <p>Conectando ao Firebase...</p>
     </div>
+
+```
+<div id="mainApp" class="container hidden">
+    <h1>🎵 Gestão de Serviços - MEI</h1>
+    <p class="subtitle">City Lost Down Produções v2.1</p>
     
-    <div id="mainApp" class="container hidden">
-        <h1>🎵 Gestão de Serviços - MEI</h1>
-        <p class="subtitle">City Lost Down Produções v2.1</p>
-        
-        <div id="syncStatus" class="sync-status">
-            <span id="syncIcon">⚠️</span>
-            <span id="syncText">Conectando...</span>
+    <div id="syncStatus" class="sync-status">
+        <span id="syncIcon">⚠️</span>
+        <span id="syncText">Conectando...</span>
+    </div>
+    
+    <div id="alertsContainer"></div>
+    
+    <div class="dashboard-cards">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">💰</span>
+                <span class="card-title">Faturamento MEI (Mês)</span>
+            </div>
+            <div class="card-value" style="color: var(--primary);" id="faturamentoMes">R$ 0,00</div>
+            <div class="card-subtitle">Pagamentos recebidos</div>
         </div>
         
-        <div id="alertsContainer"></div>
-        
-        <div class="dashboard-cards">
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">💰</span>
-                    <span class="card-title">Faturamento MEI (Mês)</span>
-                </div>
-                <div class="card-value" style="color: var(--primary);" id="faturamentoMes">R$ 0,00</div>
-                <div class="card-subtitle">Pagamentos recebidos</div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">💵</span>
+                <span class="card-title">Total a Receber</span>
             </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">💵</span>
-                    <span class="card-title">Total a Receber</span>
-                </div>
-                <div class="card-value" style="color: var(--warning);" id="totalReceber">R$ 0,00</div>
-                <div class="card-subtitle" id="qtdPendente">0 serviços</div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">✅</span>
-                    <span class="card-title">Recebido (Mês)</span>
-                </div>
-                <div class="card-value" style="color: var(--success);" id="totalRecebido">R$ 0,00</div>
-                <div class="card-subtitle" id="qtdPago">0 pagos</div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">📊</span>
-                    <span class="card-title">Serviços Ativos</span>
-                </div>
-                <div class="card-value" style="color: var(--info);" id="servicosAtivos">0</div>
-                <div class="card-subtitle">Em andamento</div>
-            </div>
+            <div class="card-value" style="color: var(--warning);" id="totalReceber">R$ 0,00</div>
+            <div class="card-subtitle" id="qtdPendente">0 serviços</div>
         </div>
         
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">✅</span>
+                <span class="card-title">Recebido (Mês)</span>
+            </div>
+            <div class="card-value" style="color: var(--success);" id="totalRecebido">R$ 0,00</div>
+            <div class="card-subtitle" id="qtdPago">0 pagos</div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📊</span>
+                <span class="card-title">Serviços Ativos</span>
+            </div>
+            <div class="card-value" style="color: var(--info);" id="servicosAtivos">0</div>
+            <div class="card-subtitle">Em andamento</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <button class="btn-primary" onclick="abrirModalNovoServico()">
+            ➕ Novo Serviço / Trabalho
+        </button>
+    </div>
+    
+    <div class="section">
+        <div class="tabs">
+            <button class="tab active" onclick="filtrarServicos('todos')">📋 Todos</button>
+            <button class="tab" onclick="filtrarServicos('orcamento')">📝 Orçamentos</button>
+            <button class="tab" onclick="filtrarServicos('agendado')">📅 Agendados</button>
+            <button class="tab" onclick="filtrarServicos('producao')">🎵 Produção</button>
+            <button class="tab" onclick="filtrarServicos('entregue')">✅ Entregues</button>
+            <button class="tab" onclick="filtrarServicos('parcial')">💰 Parciais</button>
+            <button class="tab" onclick="filtrarServicos('pago')">✅ Pagos</button>
+        </div>
+        
+        <div id="listaServicos"></div>
+    </div>
+    
+    <div class="grid-2">
         <div class="section">
-            <button class="btn-primary" onclick="abrirModalNovoServico()">
-                ➕ Novo Serviço / Trabalho
+            <div class="section-header">
+                <h2 class="section-title">📊 Relatórios</h2>
+            </div>
+            <button class="btn-info mb-2" onclick="exportarRelatorioMEI()">
+                📄 Exportar Faturamento MEI
             </button>
         </div>
         
         <div class="section">
-            <div class="tabs">
-                <button class="tab active" onclick="filtrarServicos('todos')">📋 Todos</button>
-                <button class="tab" onclick="filtrarServicos('orcamento')">📝 Orçamentos</button>
-                <button class="tab" onclick="filtrarServicos('agendado')">📅 Agendados</button>
-                <button class="tab" onclick="filtrarServicos('producao')">🎵 Produção</button>
-                <button class="tab" onclick="filtrarServicos('entregue')">✅ Entregues</button>
-                <button class="tab" onclick="filtrarServicos('parcial')">💰 Parciais</button>
-                <button class="tab" onclick="filtrarServicos('pago')">✅ Pagos</button>
+            <div class="section-header">
+                <h2 class="section-title">⚙️ Sistema</h2>
             </div>
-            
-            <div id="listaServicos"></div>
+            <button class="btn-secondary mb-2" onclick="backupDados()">
+                💾 Backup Local
+            </button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>🔗 Integrado com Sistema Financeiro</p>
+        <p class="mt-2">☁️ Sincronização Automática Ativa</p>
+        <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">v2.1 - Ordenação inteligente + Integração completa</p>
+    </div>
+</div>
+
+<!-- Modal Novo Serviço -->
+<div id="modalNovoServico" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">➕ Novo Serviço</h3>
+            <button class="close-modal" onclick="fecharModal('modalNovoServico')">&times;</button>
+        </div>
+        
+        <div class="form-group">
+            <label>Cliente *</label>
+            <input type="text" id="nomeCliente" placeholder="Nome do cliente">
+        </div>
+        
+        <div class="form-group">
+            <label>Contato</label>
+            <input type="text" id="contatoCliente" placeholder="Telefone ou Instagram">
+        </div>
+        
+        <div class="form-group">
+            <label>Tipo de Serviço *</label>
+            <select id="tipoServico">
+                <option value="producao-completa">🎵 Produção Completa (4h)</option>
+                <option value="gravacao">🎙️ Gravação</option>
+                <option value="mixagem">🎚️ Mixagem</option>
+                <option value="masterizacao">💿 Masterização</option>
+                <option value="beat">🎹 Beat/Instrumental</option>
+                <option value="operacao-evento">🎤 Operação Evento</option>
+                <option value="operacao-autotune">🎵 AutoTune Show</option>
+                <option value="outro">📦 Outro</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Valor Total (R$) *</label>
+            <input type="number" id="valorServico" placeholder="0.00" step="0.01">
+        </div>
+        
+        <div class="form-group">
+            <label>Status Inicial *</label>
+            <select id="statusInicial">
+                <option value="orcamento">📝 Orçamento (negociando)</option>
+                <option value="agendado">📅 Agendado (confirmado)</option>
+                <option value="producao">🎵 Em Produção (trabalhando)</option>
+                <option value="entregue">✅ Entregue (aguardando pagamento)</option>
+            </select>
+        </div>
+        
+        <div class="alert alert-info">
+            <span class="alert-icon">💡</span>
+            <div>
+                <strong>Cliente já pagou algo?</strong>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    Se sim, informe abaixo. Será adicionado automaticamente no Sistema Financeiro!
+                </p>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Quanto foi pago agora? (R$)</label>
+            <input type="number" id="valorPago" placeholder="0.00" step="0.01">
+            <small style="color: #666; display: block; margin-top: 0.5rem;">
+                Deixe 0 se ainda não recebeu nada
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label>Data do Serviço/Evento</label>
+            <input type="date" id="dataServico">
+            <small style="color: #666; display: block; margin-top: 0.5rem;">
+                📅 Data do show, gravação ou entrega
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label>Prazo de Entrega</label>
+            <input type="date" id="prazoEntrega">
+        </div>
+        
+        <div class="form-group">
+            <label>Observações</label>
+            <textarea id="observacoes" placeholder="Detalhes do serviço"></textarea>
         </div>
         
         <div class="grid-2">
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">📊 Relatórios</h2>
-                </div>
-                <button class="btn-info mb-2" onclick="exportarRelatorioMEI()">
-                    📄 Exportar Faturamento MEI
-                </button>
-            </div>
-            
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">⚙️ Sistema</h2>
-                </div>
-                <button class="btn-secondary mb-2" onclick="backupDados()">
-                    💾 Backup Local
-                </button>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>🔗 Integrado com Sistema Financeiro</p>
-            <p class="mt-2">☁️ Sincronização Automática Ativa</p>
-            <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">v2.1 - Ordenação inteligente + Google Calendar ready</p>
+            <button class="btn-success" onclick="salvarNovoServico()">
+                ✅ Salvar Serviço
+            </button>
+            <button class="btn-secondary" onclick="fecharModal('modalNovoServico')">
+                ❌ Cancelar
+            </button>
         </div>
     </div>
-    
-    <!-- Modal Novo Serviço -->
-    <div id="modalNovoServico" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">➕ Novo Serviço</h3>
-                <button class="close-modal" onclick="fecharModal('modalNovoServico')">&times;</button>
-            </div>
-            
-            <div class="form-group">
-                <label>Cliente *</label>
-                <input type="text" id="nomeCliente" placeholder="Nome do cliente">
-            </div>
-            
-            <div class="form-group">
-                <label>Contato</label>
-                <input type="text" id="contatoCliente" placeholder="Telefone ou Instagram">
-            </div>
-            
-            <div class="form-group">
-                <label>Tipo de Serviço *</label>
-                <select id="tipoServico">
-                    <option value="producao-completa">🎵 Produção Completa (4h)</option>
-                    <option value="gravacao">🎙️ Gravação</option>
-                    <option value="mixagem">🎚️ Mixagem</option>
-                    <option value="masterizacao">💿 Masterização</option>
-                    <option value="beat">🎹 Beat/Instrumental</option>
-                    <option value="operacao-evento">🎤 Operação Evento</option>
-                    <option value="operacao-autotune">🎵 AutoTune Show</option>
-                    <option value="outro">📦 Outro</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Valor Total (R$) *</label>
-                <input type="number" id="valorServico" placeholder="0.00" step="0.01">
-            </div>
-            
-            <div class="form-group">
-                <label>Status Inicial *</label>
-                <select id="statusInicial">
-                    <option value="orcamento">📝 Orçamento (negociando)</option>
-                    <option value="agendado">📅 Agendado (confirmado)</option>
-                    <option value="producao">🎵 Em Produção (trabalhando)</option>
-                    <option value="entregue">✅ Entregue (aguardando pagamento)</option>
-                </select>
-            </div>
-            
-            <div class="alert alert-info">
-                <span class="alert-icon">💡</span>
-                <div>
-                    <strong>Cliente já pagou algo?</strong>
-                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                        Se sim, informe abaixo. Será adicionado automaticamente no Sistema Financeiro!
-                    </p>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Quanto foi pago agora? (R$)</label>
-                <input type="number" id="valorPago" placeholder="0.00" step="0.01">
-                <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    Deixe 0 se ainda não recebeu nada
-                </small>
-            </div>
-            
-            <div class="form-group">
-                <label>Data do Serviço/Evento</label>
-                <input type="date" id="dataServico">
-                <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    📅 Data do show, gravação ou entrega
-                </small>
-            </div>
-            
-            <div class="form-group">
-                <label>Prazo de Entrega</label>
-                <input type="date" id="prazoEntrega">
-            </div>
-            
-            <div class="form-group">
-                <label>Observações</label>
-                <textarea id="observacoes" placeholder="Detalhes do serviço"></textarea>
-            </div>
-            
-            <div class="grid-2">
-                <button class="btn-success" onclick="salvarNovoServico()">
-                    ✅ Salvar Serviço
-                </button>
-                <button class="btn-secondary" onclick="fecharModal('modalNovoServico')">
-                    ❌ Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Editar Serviço -->
-    <div id="modalEditarServico" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">✏️ Editar Serviço</h3>
-                <button class="close-modal" onclick="fecharModal('modalEditarServico')">&times;</button>
-            </div>
-            
-            <input type="hidden" id="editId">
-            
-            <div class="form-group">
-                <label>Status do Serviço</label>
-                <select id="editStatus">
-                    <option value="orcamento">📝 Orçamento</option>
-                    <option value="agendado">📅 Agendado</option>
-                    <option value="producao">🎵 Em Produção</option>
-                    <option value="entregue">✅ Entregue</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Cliente</label>
-                <input type="text" id="editNomeCliente">
-            </div>
-            
-            <div class="form-group">
-                <label>Contato</label>
-                <input type="text" id="editContatoCliente">
-            </div>
-            
-            <div class="form-group">
-                <label>Tipo de Serviço</label>
-                <select id="editTipoServico">
-                    <option value="producao-completa">🎵 Produção Completa</option>
-                    <option value="gravacao">🎙️ Gravação</option>
-                    <option value="mixagem">🎚️ Mixagem</option>
-                    <option value="masterizacao">💿 Masterização</option>
-                    <option value="beat">🎹 Beat/Instrumental</option>
-                    <option value="operacao-evento">🎤 Operação Evento</option>
-                    <option value="operacao-autotune">🎵 AutoTune Show</option>
-                    <option value="outro">📦 Outro</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Valor Total (R$)</label>
-                <input type="number" id="editValorServico" step="0.01" readonly style="background: #f0f0f0;">
-            </div>
-            
-            <div id="editPaymentInfo"></div>
-            
-            <div class="form-group">
-                <label>Data do Serviço/Evento</label>
-                <input type="date" id="editDataServico">
-            </div>
-            
-            <div class="form-group">
-                <label>Prazo de Entrega</label>
-                <input type="date" id="editPrazoEntrega">
-            </div>
-            
-            <div class="form-group">
-                <label>Observações</label>
-                <textarea id="editObservacoes"></textarea>
-            </div>
-            
-            <div class="grid-3">
-                <button class="btn-success" onclick="salvarEdicaoServico()">
-                    ✅ Salvar
-                </button>
-                <button class="btn-info" onclick="abrirModalAdicionarPagamento()">
-                    💰 Adicionar Pagamento
-                </button>
-                <button class="btn-secondary" onclick="fecharModal('modalEditarServico')">
-                    ❌ Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Adicionar Pagamento -->
-    <div id="modalAdicionarPagamento" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">💰 Registrar Pagamento</h3>
-                <button class="close-modal" onclick="fecharModal('modalAdicionarPagamento')">&times;</button>
-            </div>
-            
-            <div class="alert alert-info">
-                <span class="alert-icon">💡</span>
-                <div>
-                    <strong>Cliente pagou?</strong>
-                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                        O valor será adicionado automaticamente no Sistema Financeiro como Renda Extra!
-                    </p>
-                </div>
-            </div>
-            
-            <div id="pagamentoInfo" class="mb-2"></div>
-            
-            <div class="form-group">
-                <label>Valor Recebido (R$) *</label>
-                <input type="number" id="valorPagamentoNovo" placeholder="0.00" step="0.01">
-            </div>
-            
-            <div class="form-group">
-                <label>Data do Recebimento *</label>
-                <input type="date" id="dataPagamento">
-                <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    ⚠️ Importante: Esta data determina o mês do faturamento MEI!
-                </small>
-            </div>
-            
-            <div class="grid-2">
-                <button class="btn-success" onclick="registrarPagamento()">
-                    ✅ Registrar Pagamento
-                </button>
-                <button class="btn-secondary" onclick="fecharModal('modalAdicionarPagamento')">
-                    ❌ Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
+</div>
 
-    <script>
-        // ==================== CONFIGURAÇÃO FIREBASE ====================
+<!-- Modal Editar Serviço -->
+<div id="modalEditarServico" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">✏️ Editar Serviço</h3>
+            <button class="close-modal" onclick="fecharModal('modalEditarServico')">&times;</button>
+        </div>
         
-        let firebaseApp = null;
-        let database = null;
-        let firebaseConfigured = false;
-        let filtroAtual = 'todos';
+        <input type="hidden" id="editId">
         
-        const firebaseConfig = {
-            apiKey: "AIzaSyAkPDC24m8w4LfsxhhFiMrFNFTOeSYFmsQ",
-            authDomain: "controle-financeiro-app-ce215.firebaseapp.com",
-            databaseURL: "https://controle-financeiro-app-ce215-default-rtdb.firebaseio.com",
-            projectId: "controle-financeiro-app-ce215",
-            storageBucket: "controle-financeiro-app-ce215.firebasestorage.app",
-            messagingSenderId: "564515008503",
-            appId: "1:564515008503:web:712440580268dffa4a48f2"
-        };
+        <div class="form-group">
+            <label>Status do Serviço</label>
+            <select id="editStatus">
+                <option value="orcamento">📝 Orçamento</option>
+                <option value="agendado">📅 Agendado</option>
+                <option value="producao">🎵 Em Produção</option>
+                <option value="entregue">✅ Entregue</option>
+            </select>
+        </div>
         
-        const estadoInicial = {
-            servicos: [],
-            mesesFechados: []
-        };
+        <div class="form-group">
+            <label>Cliente</label>
+            <input type="text" id="editNomeCliente">
+        </div>
         
-        let estado = JSON.parse(JSON.stringify(estadoInicial));
+        <div class="form-group">
+            <label>Contato</label>
+            <input type="text" id="editContatoCliente">
+        </div>
         
-        const tiposServicoNomes = {
-            'producao-completa': 'Produção Completa',
-            'gravacao': 'Gravação',
-            'mixagem': 'Mixagem',
-            'masterizacao': 'Masterização',
-            'beat': 'Beat/Instrumental',
-            'operacao-evento': 'Operação Evento',
-            'operacao-autotune': 'AutoTune Show',
-            'outro': 'Outro'
-        };
+        <div class="form-group">
+            <label>Tipo de Serviço</label>
+            <select id="editTipoServico">
+                <option value="producao-completa">🎵 Produção Completa</option>
+                <option value="gravacao">🎙️ Gravação</option>
+                <option value="mixagem">🎚️ Mixagem</option>
+                <option value="masterizacao">💿 Masterização</option>
+                <option value="beat">🎹 Beat/Instrumental</option>
+                <option value="operacao-evento">🎤 Operação Evento</option>
+                <option value="operacao-autotune">🎵 AutoTune Show</option>
+                <option value="outro">📦 Outro</option>
+            </select>
+        </div>
         
-        const statusNomes = {
-            'orcamento': '📝 Orçamento',
-            'agendado': '📅 Agendado',
-            'producao': '🎵 Em Produção',
-            'entregue': '✅ Entregue',
-            'parcial': '💰 Parcial',
-            'pago': '✅ Pago'
-        };
+        <div class="form-group">
+            <label>Valor Total (R$)</label>
+            <input type="number" id="editValorServico" step="0.01" readonly style="background: #f0f0f0;">
+        </div>
         
-        // ==================== FIREBASE ====================
+        <div id="editPaymentInfo"></div>
         
-        function inicializarFirebase() {
-    try {
-        console.log('🚀 Iniciando Firebase...');
-        firebaseApp = firebase.initializeApp(firebaseConfig);
-        database = firebaseApp.database();
-        firebaseConfigured = true;
+        <div class="form-group">
+            <label>Data do Serviço/Evento</label>
+            <input type="date" id="editDataServico">
+        </div>
         
-        console.log('✅ Firebase inicializado!');
-        atualizarStatusSync(true, '☁️ Conectando...');
+        <div class="form-group">
+            <label>Prazo de Entrega</label>
+            <input type="date" id="editPrazoEntrega">
+        </div>
         
-        // CRÍTICO: Listener em TEMPO REAL (.on não .once!)
-        database.ref('servicos-mei').on('value', (snapshot) => {
-            const dados = snapshot.val();
-            if (dados) {
-                console.log('📥 Dados recebidos do Firebase!');
-                console.log('📊 Serviços:', dados.servicos?.length || 0);
-                estado = dados;
-                atualizarInterface();
-                atualizarStatusSync(true, '☁️ Sincronizado');
-            } else {
-                console.log('ℹ️ Nenhum dado no Firebase, criando estrutura...');
-                salvarNaNuvem();
-            }
-        }, (error) => {
-            console.error('❌ Erro no listener:', error);
-            atualizarStatusSync(false, '❌ Erro ao conectar');
-        });
+        <div class="form-group">
+            <label>Observações</label>
+            <textarea id="editObservacoes"></textarea>
+        </div>
         
-        // Teste de conexão
-        testarConexaoFirebase();
-        
-        return true;
-    } catch (error) {
-        console.error('❌ Erro ao inicializar Firebase:', error);
-        firebaseConfigured = false;
-        atualizarStatusSync(false, '❌ Erro na inicialização');
-        return false;
-    }
-}
-        
-        function salvarNaNuvem() {
-    if (!firebaseConfigured || !database) {
-        console.warn('⚠️ Firebase não configurado, salvando apenas localmente');
-        return;
-    }
-    
-    try {
-        console.log('💾 Salvando no Firebase...');
-        console.log('📊 Dados:', estado.servicos?.length || 0, 'serviços');
-        
-        database.ref('servicos-mei').set(estado, (error) => {
-            if (error) {
-                console.error('❌ Erro ao salvar no Firebase:', error);
-                atualizarStatusSync(false, '❌ Erro ao salvar');
-            } else {
-                console.log('✅ SALVO NO FIREBASE COM SUCESSO!');
-                atualizarStatusSync(true, '☁️ Sincronizado');
-            }
-        });
-    } catch (error) {
-        console.error('❌ Erro crítico ao salvar:', error);
-        atualizarStatusSync(false, '❌ Erro crítico');
-    }
-}
-        function testarConexaoFirebase() {
-    if (!database) {
-        console.warn('⚠️ Database não inicializado');
-        return;
-    }
-    
-    console.log('🔍 Testando conexão Firebase...');
-    
-    const connectedRef = database.ref('.info/connected');
-    connectedRef.on('value', (snapshot) => {
-        if (snapshot.val() === true) {
-            console.log('✅ FIREBASE CONECTADO!');
-            atualizarStatusSync(true, '☁️ Conectado - Sincronização Ativa');
-        } else {
-            console.log('⚠️ FIREBASE DESCONECTADO');
-            atualizarStatusSync(false, '⚠️ Offline - Salvando Localmente');
-        }
-    });
-}
-function adicionarRendaExtraNoFinanceiro(valor, descricao) {
-    if (!firebaseConfigured || !database) {
-        console.warn('⚠️ Firebase não configurado');
-        return;
-    }
-    
-    database.ref('financeiro').once('value', (snapshot) => {
-        const financeiro = snapshot.val() || {
-            saldoDia20: 0,
-            saldoDia5: 0,
-            rendaExtra: 0,
-            colchao: 0,
-            contas: [],
-            gastos: [],
-            historico: [],
-            mesesFechados: []
-        };
-        
-        financeiro.rendaExtra = (financeiro.rendaExtra || 0) + valor;
-        
-        if (!financeiro.historico) {
-            financeiro.historico = [];
-        }
-        
-        financeiro.historico.push({
-            id: Date.now(),
-            data: new Date().toLocaleString('pt-BR'),
-            desc: descricao,
-            valor: valor,
-            tipo: 'entrada'
-        });
-        
-        database.ref('financeiro').set(financeiro);
-    });
-}
+        <div class="grid-3">
+            <button class="btn-success" onclick="salvarEdicaoServico()">
+                ✅ Salvar
+            </button>
+            <button class="btn-info" onclick="abrirModalAdicionarPagamento()">
+                💰 Adicionar Pagamento
+            </button>
+            <button class="btn-secondary" onclick="fecharModal('modalEditarServico')">
+                ❌ Cancelar
+            </button>
+        </div>
+    </div>
+</div>
 
+<!-- Modal Adicionar Pagamento -->
+<div id="modalAdicionarPagamento" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">💰 Registrar Pagamento</h3>
+            <button class="close-modal" onclick="fecharModal('modalAdicionarPagamento')">&times;</button>
+        </div>
         
-        function atualizarStatusSync(conectado, texto) {
-            const statusEl = document.getElementById('syncStatus');
-            const iconEl = document.getElementById('syncIcon');
-            const textEl = document.getElementById('syncText');
-            
-            if (conectado) {
-                statusEl.className = 'sync-status connected';
-                iconEl.textContent = '☁️';
-                textEl.textContent = texto;
-            } else {
-                statusEl.className = 'sync-status';
-                iconEl.textContent = '⚠️';
-                textEl.textContent = texto;
-            }
-        }
+        <div class="alert alert-info">
+            <span class="alert-icon">💡</span>
+            <div>
+                <strong>Cliente pagou?</strong>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    O valor será adicionado automaticamente no Sistema Financeiro como Renda Extra!
+                </p>
+            </div>
+        </div>
         
-        // ==================== INTEGRAÇÃO COM SISTEMA FINANCEIRO ====================
+        <div id="pagamentoInfo" class="mb-2"></div>
         
-        function adicionarRendaExtraNoFinanceiro(valor, descricao) {
-    if (!firebaseConfigured || !database) {
-        console.warn('⚠️ Firebase não configurado');
-        return;
-    }
+        <div class="form-group">
+            <label>Valor Recebido (R$) *</label>
+            <input type="number" id="valorPagamentoNovo" placeholder="0.00" step="0.01">
+        </div>
+        
+        <div class="form-group">
+            <label>Data do Recebimento *</label>
+            <input type="date" id="dataPagamento">
+            <small style="color: #666; display: block; margin-top: 0.5rem;">
+                ⚠️ Importante: Esta data determina o mês do faturamento MEI!
+            </small>
+        </div>
+        
+        <div class="grid-2">
+            <button class="btn-success" onclick="registrarPagamento()">
+                ✅ Registrar Pagamento
+            </button>
+            <button class="btn-secondary" onclick="fecharModal('modalAdicionarPagamento')">
+                ❌ Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== CONFIGURAÇÃO FIREBASE ====================
     
-    try {
-        console.log('💰 Adicionando R$', valor, 'ao financeiro...');
-        console.log('📝 Descrição:', descricao);
-        
-        database.ref('financeiro').once('value', (snapshot) => {
-            const financeiro = snapshot.val() || {
-                saldoDia20: 0,
-                saldoDia5: 0,
-                rendaExtra: 0,
-                colchao: 0,
-                contas: [],
-                gastos: [],
-                historico: [],
-                mesesFechados: []
-            };
+    let firebaseApp = null;
+    let database = null;
+    let firebaseConfigured = false;
+    let filtroAtual = 'todos';
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyAkPDC24m8w4LfsxhhFiMrFNFTOeSYFmsQ",
+        authDomain: "controle-financeiro-app-ce215.firebaseapp.com",
+        databaseURL: "https://controle-financeiro-app-ce215-default-rtdb.firebaseio.com",
+        projectId: "controle-financeiro-app-ce215",
+        storageBucket: "controle-financeiro-app-ce215.firebasestorage.app",
+        messagingSenderId: "564515008503",
+        appId: "1:564515008503:web:712440580268dffa4a48f2"
+    };
+    
+    const estadoInicial = {
+        servicos: [],
+        mesesFechados: []
+    };
+    
+    let estado = JSON.parse(JSON.stringify(estadoInicial));
+    
+    const tiposServicoNomes = {
+        'producao-completa': 'Produção Completa',
+        'gravacao': 'Gravação',
+        'mixagem': 'Mixagem',
+        'masterizacao': 'Masterização',
+        'beat': 'Beat/Instrumental',
+        'operacao-evento': 'Operação Evento',
+        'operacao-autotune': 'AutoTune Show',
+        'outro': 'Outro'
+    };
+    
+    const statusNomes = {
+        'orcamento': '📝 Orçamento',
+        'agendado': '📅 Agendado',
+        'producao': '🎵 Em Produção',
+        'entregue': '✅ Entregue',
+        'parcial': '💰 Parcial',
+        'pago': '✅ Pago'
+    };
+    
+    // ==================== FIREBASE ====================
+    
+    function inicializarFirebase() {
+        try {
+            console.log('🚀 Iniciando Firebase...');
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            database = firebaseApp.database();
+            firebaseConfigured = true;
             
-            console.log('📊 Renda Extra ANTES:', financeiro.rendaExtra);
+            console.log('✅ Firebase inicializado!');
+            atualizarStatusSync(true, '☁️ Conectando...');
             
-            financeiro.rendaExtra = (financeiro.rendaExtra || 0) + valor;
-            
-            console.log('📊 Renda Extra DEPOIS:', financeiro.rendaExtra);
-            
-            if (!financeiro.historico) {
-                financeiro.historico = [];
-            }
-            
-            financeiro.historico.push({
-                id: Date.now(),
-                data: new Date().toLocaleString('pt-BR'),
-                desc: descricao,
-                valor: valor,
-                tipo: 'entrada'
+            database.ref('servicos-mei').on('value', (snapshot) => {
+                const dados = snapshot.val();
+                if (dados) {
+                    console.log('📥 Dados recebidos do Firebase!');
+                    console.log('📊 Serviços:', dados.servicos?.length || 0);
+                    estado = dados;
+                    atualizarInterface();
+                    atualizarStatusSync(true, '☁️ Sincronizado');
+                } else {
+                    console.log('ℹ️ Nenhum dado no Firebase, criando estrutura...');
+                    salvarNaNuvem();
+                }
+            }, (error) => {
+                console.error('❌ Erro no listener:', error);
+                atualizarStatusSync(false, '❌ Erro ao conectar');
             });
             
-            database.ref('financeiro').set(financeiro, (error) => {
+            testarConexaoFirebase();
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao inicializar Firebase:', error);
+            firebaseConfigured = false;
+            atualizarStatusSync(false, '❌ Erro na inicialização');
+            return false;
+        }
+    }
+    
+    function salvarNaNuvem() {
+        if (!firebaseConfigured || !database) {
+            console.warn('⚠️ Firebase não configurado, salvando apenas localmente');
+            return;
+        }
+        
+        try {
+            console.log('💾 Salvando no Firebase...');
+            console.log('📊 Dados:', estado.servicos?.length || 0, 'serviços');
+            
+            database.ref('servicos-mei').set(estado, (error) => {
                 if (error) {
-                    console.error('❌ Erro ao salvar financeiro:', error);
-                    alert('⚠️ Erro ao integrar com Sistema Financeiro!');
+                    console.error('❌ Erro ao salvar no Firebase:', error);
+                    atualizarStatusSync(false, '❌ Erro ao salvar');
                 } else {
-                    console.log('✅ Sistema Financeiro atualizado!');
-                    console.log('💰 Novo valor Renda Extra:', financeiro.rendaExtra);
+                    console.log('✅ SALVO NO FIREBASE COM SUCESSO!');
+                    atualizarStatusSync(true, '☁️ Sincronizado');
                 }
             });
-        });
-    } catch (error) {
-        console.error('❌ Erro crítico:', error);
-        alert('⚠️ Erro crítico ao integrar!');
+        } catch (error) {
+            console.error('❌ Erro crítico ao salvar:', error);
+            atualizarStatusSync(false, '❌ Erro crítico');
+        }
     }
-}
-
-            
-            try {
-                database.ref('financeiro').once('value', (snapshot) => {
-                    const financeiro = snapshot.val() || {
-                        saldoDia20: 0,
-                        saldoDia5: 0,
-                        rendaExtra: 0,
-                        colchao: 0,
-                        contas: [],
-                        gastos: [],
-                        historico: [],
-                        mesesFechados: []
-                    };
-                    
-                    financeiro.rendaExtra += valor;
-                    
-                    financeiro.historico.push({
-                        id: Date.now(),
-                        data: new Date().toLocaleString('pt-BR'),
-                        desc: descricao,
-                        valor: valor,
-                        tipo: 'entrada'
-                    });
-                    
-                    database.ref('financeiro').set(financeiro);
-                    
-                    console.log(`✅ Renda extra adicionada: R$ ${valor.toFixed(2)}`);
-                    console.log(`📝 ${descricao}`);
-                });
-            } catch (error) {
-                console.error('❌ Erro ao adicionar renda:', error);
-            }
+    
+    function testarConexaoFirebase() {
+        if (!database) {
+            console.warn('⚠️ Database não inicializado');
+            return;
         }
         
-        // ==================== INTEGRAÇÃO GOOGLE CALENDAR (FUTURO) ====================
+        console.log('🔍 Testando conexão Firebase...');
         
-        /*
-         * 🔮 PRÓXIMA VERSÃO: Integração com Google Calendar
-         * 
-         * Quando implementado, este módulo irá:
-         * 1. Criar eventos automaticamente no Google Calendar
-         * 2. Sincronizar datas e horários
-         * 3. Enviar notificações/lembretes
-         * 4. Atualizar quando mudar status/data
-         * 
-         * Requisitos:
-         * - Google Calendar API habilitada
-         * - OAuth 2.0 configurado
-         * - Permissões: calendar.events
-         */
-        
-        // function sincronizarComGoogleCalendar(servico) {
-        //     if (!servico.dataServico) return;
-        //     
-        //     const evento = {
-        //         summary: `${servico.tipo} - ${servico.cliente}`,
-        //         description: `Serviço: ${tiposServicoNomes[servico.tipo]}\nValor: R$ ${servico.valorTotal.toFixed(2)}\nContato: ${servico.contato || 'N/A'}`,
-        //         start: {
-        //             date: servico.dataServico
-        //         },
-        //         end: {
-        //             date: servico.dataServico
-        //         },
-        //         reminders: {
-        //             useDefault: false,
-        //             overrides: [
-        //                 { method: 'popup', minutes: 24 * 60 },  // 1 dia antes
-        //                 { method: 'popup', minutes: 60 }        // 1 hora antes
-        //             ]
-        //         }
-        //     };
-        //     
-        //     // TODO: Implementar chamada à API do Google Calendar
-        //     // gapi.client.calendar.events.insert({
-        //     //     calendarId: 'primary',
-        //     //     resource: evento
-        //     // });
-        // }
-        
-        // function atualizarEventoGoogleCalendar(servico) {
-        //     // TODO: Atualizar evento existente
-        // }
-        
-        // function deletarEventoGoogleCalendar(servico) {
-        //     // TODO: Deletar evento quando cancelar serviço
-        // }
-        
-        // ==================== SERVIÇOS ====================
-        
-        function calcularStatusServico(servico) {
-            if (servico.valorPendente === 0 && servico.valorTotal > 0) {
-                return 'pago';
-            } else if (servico.valorPago > 0 && servico.valorPendente > 0) {
-                return 'parcial';
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snapshot) => {
+            if (snapshot.val() === true) {
+                console.log('✅ FIREBASE CONECTADO!');
+                atualizarStatusSync(true, '☁️ Conectado - Sincronização Ativa');
             } else {
-                return servico.status || 'entregue';
+                console.log('⚠️ FIREBASE DESCONECTADO');
+                atualizarStatusSync(false, '⚠️ Offline - Salvando Localmente');
             }
+        });
+    }
+    
+    function atualizarStatusSync(conectado, texto) {
+        const statusEl = document.getElementById('syncStatus');
+        const iconEl = document.getElementById('syncIcon');
+        const textEl = document.getElementById('syncText');
+        
+        if (conectado) {
+            statusEl.className = 'sync-status connected';
+            iconEl.textContent = '☁️';
+            textEl.textContent = texto;
+        } else {
+            statusEl.className = 'sync-status';
+            iconEl.textContent = '⚠️';
+            textEl.textContent = texto;
+        }
+    }
+    
+    // ==================== INTEGRAÇÃO COM SISTEMA FINANCEIRO ====================
+    
+    function adicionarRendaExtraNoFinanceiro(valor, descricao) {
+        if (!firebaseConfigured || !database) {
+            console.warn('⚠️ Firebase não configurado');
+            return;
         }
         
-        function abrirModalNovoServico() {
-            document.getElementById('nomeCliente').value = '';
-            document.getElementById('contatoCliente').value = '';
-            document.getElementById('tipoServico').value = 'producao-completa';
-            document.getElementById('valorServico').value = '';
-            document.getElementById('statusInicial').value = 'orcamento';
-            document.getElementById('valorPago').value = '';
-            document.getElementById('dataServico').value = '';
-            document.getElementById('prazoEntrega').value = '';
-            document.getElementById('observacoes').value = '';
-            document.getElementById('modalNovoServico').classList.add('active');
-        }
-        
-        function salvarNovoServico() {
-            const nome = document.getElementById('nomeCliente').value.trim();
-            const contato = document.getElementById('contatoCliente').value.trim();
-            const tipo = document.getElementById('tipoServico').value;
-            const valorTotal = parseFloat(document.getElementById('valorServico').value);
-            const status = document.getElementById('statusInicial').value;
-            const valorPago = parseFloat(document.getElementById('valorPago').value) || 0;
-            const dataServico = document.getElementById('dataServico').value;
-            const prazo = document.getElementById('prazoEntrega').value;
-            const obs = document.getElementById('observacoes').value.trim();
+        try {
+            console.log('💰 Adicionando R$', valor.toFixed(2), 'ao financeiro...');
+            console.log('📝 Descrição:', descricao);
             
-            if (!nome || isNaN(valorTotal) || valorTotal <= 0) {
-                alert('❌ Preencha cliente e valor total!');
-                return;
-            }
-            
-            if (valorPago > valorTotal) {
-                alert('❌ Valor pago não pode ser maior que o valor total!');
-                return;
-            }
-            
-            const novoServico = {
-                id: Date.now(),
-                cliente: nome,
-                contato: contato,
-                tipo: tipo,
-                valorTotal: valorTotal,
-                valorPago: valorPago,
-                valorPendente: valorTotal - valorPago,
-                status: status,
-                pagamentos: [],
-                dataEntrada: new Date().toLocaleDateString('pt-BR'),
-                dataServico: dataServico,
-                prazoEntrega: prazo,
-                observacoes: obs
-            };
-            
-            if (valorPago > 0) {
-                const dataPagamento = new Date().toLocaleDateString('pt-BR');
-                novoServico.pagamentos.push({
+            database.ref('financeiro').once('value', (snapshot) => {
+                const financeiro = snapshot.val() || {
+                    saldoDia20: 0,
+                    saldoDia5: 0,
+                    rendaExtra: 0,
+                    colchao: 0,
+                    contas: [],
+                    gastos: [],
+                    historico: [],
+                    mesesFechados: []
+                };
+                
+                console.log('📊 Renda Extra ANTES:', financeiro.rendaExtra);
+                
+                financeiro.rendaExtra = (financeiro.rendaExtra || 0) + valor;
+                
+                console.log('📊 Renda Extra DEPOIS:', financeiro.rendaExtra);
+                
+                if (!financeiro.historico) {
+                    financeiro.historico = [];
+                }
+                
+                financeiro.historico.push({
                     id: Date.now(),
-                    valor: valorPago,
-                    data: dataPagamento,
-                    hora: new Date().toLocaleTimeString('pt-BR')
+                    data: new Date().toLocaleString('pt-BR'),
+                    desc: descricao,
+                    valor: valor,
+                    tipo: 'entrada'
                 });
                 
-                const descricao = `🎵 ${nome} - ${tiposServicoNomes[tipo]}${valorPago < valorTotal ? ' (Sinal)' : ''}`;
-                adicionarRendaExtraNoFinanceiro(valorPago, descricao);
-            }
-            
-            estado.servicos.push(novoServico);
-            
-            // 🔮 FUTURO: Sincronizar com Google Calendar
-            // if (novoServico.dataServico) {
-            //     sincronizarComGoogleCalendar(novoServico);
-            // }
-            
-            salvarDados();
-            atualizarInterface();
-            fecharModal('modalNovoServico');
-            
-            if (valorPago > 0) {
-                alert(`✅ Serviço cadastrado!\n\n💰 R$ ${valorPago.toFixed(2)} adicionado automaticamente no Sistema Financeiro!`);
-            } else {
-                alert('✅ Serviço cadastrado!');
-            }
+                database.ref('financeiro').set(financeiro, (error) => {
+                    if (error) {
+                        console.error('❌ Erro ao salvar financeiro:', error);
+                    } else {
+                        console.log('✅ Sistema Financeiro atualizado com sucesso!');
+                        console.log('💰 Novo valor Renda Extra:', financeiro.rendaExtra);
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('❌ Erro crítico na integração:', error);
+        }
+    }
+    
+    // ==================== SERVIÇOS ====================
+    
+    function calcularStatusServico(servico) {
+        if (servico.valorPendente === 0 && servico.valorTotal > 0) {
+            return 'pago';
+        } else if (servico.valorPago > 0 && servico.valorPendente > 0) {
+            return 'parcial';
+        } else {
+            return servico.status || 'entregue';
+        }
+    }
+    
+    function abrirModalNovoServico() {
+        document.getElementById('nomeCliente').value = '';
+        document.getElementById('contatoCliente').value = '';
+        document.getElementById('tipoServico').value = 'producao-completa';
+        document.getElementById('valorServico').value = '';
+        document.getElementById('statusInicial').value = 'orcamento';
+        document.getElementById('valorPago').value = '';
+        document.getElementById('dataServico').value = '';
+        document.getElementById('prazoEntrega').value = '';
+        document.getElementById('observacoes').value = '';
+        document.getElementById('modalNovoServico').classList.add('active');
+    }
+    
+    function salvarNovoServico() {
+        const nome = document.getElementById('nomeCliente').value.trim();
+        const contato = document.getElementById('contatoCliente').value.trim();
+        const tipo = document.getElementById('tipoServico').value;
+        const valorTotal = parseFloat(document.getElementById('valorServico').value);
+        const status = document.getElementById('statusInicial').value;
+        const valorPago = parseFloat(document.getElementById('valorPago').value) || 0;
+        const dataServico = document.getElementById('dataServico').value;
+        const prazo = document.getElementById('prazoEntrega').value;
+        const obs = document.getElementById('observacoes').value.trim();
+        
+        if (!nome || isNaN(valorTotal) || valorTotal <= 0) {
+            alert('❌ Preencha cliente e valor total!');
+            return;
         }
         
-        let servicoEmEdicao = null;
+        if (valorPago > valorTotal) {
+            alert('❌ Valor pago não pode ser maior que o valor total!');
+            return;
+        }
         
-        function abrirModalEditarServico(id) {
-            const servico = estado.servicos.find(s => s.id === id);
-            if (!servico) return;
+        const novoServico = {
+            id: Date.now(),
+            cliente: nome,
+            contato: contato,
+            tipo: tipo,
+            valorTotal: valorTotal,
+            valorPago: valorPago,
+            valorPendente: valorTotal - valorPago,
+            status: status,
+            pagamentos: [],
+            dataEntrada: new Date().toLocaleDateString('pt-BR'),
+            dataServico: dataServico,
+            prazoEntrega: prazo,
+            observacoes: obs
+        };
+        
+        if (valorPago > 0) {
+            const dataPagamento = new Date().toLocaleDateString('pt-BR');
+            novoServico.pagamentos.push({
+                id: Date.now(),
+                valor: valorPago,
+                data: dataPagamento,
+                hora: new Date().toLocaleTimeString('pt-BR')
+            });
             
-            servicoEmEdicao = servico;
+            const descricao = `🎵 ${nome} - ${tiposServicoNomes[tipo]}${valorPago < valorTotal ? ' (Sinal)' : ''}`;
+            adicionarRendaExtraNoFinanceiro(valorPago, descricao);
+        }
+        
+        estado.servicos.push(novoServico);
+        
+        salvarDados();
+        atualizarInterface();
+        fecharModal('modalNovoServico');
+        
+        if (valorPago > 0) {
+            alert(`✅ Serviço cadastrado!\n\n💰 R$ ${valorPago.toFixed(2)} adicionado automaticamente no Sistema Financeiro!`);
+        } else {
+            alert('✅ Serviço cadastrado!');
+        }
+    }
+    
+    let servicoEmEdicao = null;
+    
+    function abrirModalEditarServico(id) {
+        const servico = estado.servicos.find(s => s.id === id);
+        if (!servico) return;
+        
+        servicoEmEdicao = servico;
+        
+        document.getElementById('editId').value = servico.id;
+        document.getElementById('editStatus').value = servico.status || 'entregue';
+        document.getElementById('editNomeCliente').value = servico.cliente;
+        document.getElementById('editContatoCliente').value = servico.contato || '';
+        document.getElementById('editTipoServico').value = servico.tipo;
+        document.getElementById('editValorServico').value = servico.valorTotal;
+        document.getElementById('editDataServico').value = servico.dataServico || '';
+        document.getElementById('editPrazoEntrega').value = servico.prazoEntrega || '';
+        document.getElementById('editObservacoes').value = servico.observacoes || '';
+        
+        const statusAtual = calcularStatusServico(servico);
+        const paymentInfoHTML = `
+            <div class="payment-info ${statusAtual === 'pago' ? 'completo' : statusAtual === 'parcial' ? 'parcial' : ''}">
+                <div class="payment-row">
+                    <span>Valor Total:</span>
+                    <strong>R$ ${servico.valorTotal.toFixed(2)}</strong>
+                </div>
+                <div class="payment-row">
+                    <span>Já Pago:</span>
+                    <strong style="color: var(--success);">R$ ${servico.valorPago.toFixed(2)}</strong>
+                </div>
+                <div class="payment-row">
+                    <span>Pendente:</span>
+                    <strong style="color: ${servico.valorPendente > 0 ? 'var(--danger)' : 'var(--success)'};">
+                        R$ ${servico.valorPendente.toFixed(2)}
+                    </strong>
+                </div>
+                ${servico.pagamentos && servico.pagamentos.length > 0 ? `
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+                        <strong>Histórico de Pagamentos:</strong>
+                        ${servico.pagamentos.map(p => `
+                            <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                                ${p.data} ${p.hora} - R$ ${p.valor.toFixed(2)}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        document.getElementById('editPaymentInfo').innerHTML = paymentInfoHTML;
+        
+        document.getElementById('modalEditarServico').classList.add('active');
+    }
+    
+    function salvarEdicaoServico() {
+        const id = parseInt(document.getElementById('editId').value);
+        const servico = estado.servicos.find(s => s.id === id);
+        if (!servico) return;
+        
+        servico.status = document.getElementById('editStatus').value;
+        servico.cliente = document.getElementById('editNomeCliente').value.trim();
+        servico.contato = document.getElementById('editContatoCliente').value.trim();
+        servico.tipo = document.getElementById('editTipoServico').value;
+        servico.dataServico = document.getElementById('editDataServico').value;
+        servico.prazoEntrega = document.getElementById('editPrazoEntrega').value;
+        servico.observacoes = document.getElementById('editObservacoes').value.trim();
+        
+        salvarDados();
+        atualizarInterface();
+        fecharModal('modalEditarServico');
+        alert('✅ Serviço atualizado!');
+    }
+    
+    function abrirModalAdicionarPagamento() {
+        if (!servicoEmEdicao) return;
+        
+        const pagamentoInfoHTML = `
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Valor Total:</span>
+                    <strong>R$ ${servicoEmEdicao.valorTotal.toFixed(2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Já Pago:</span>
+                    <strong style="color: var(--success);">R$ ${servicoEmEdicao.valorPago.toFixed(2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #dee2e6;">
+                    <span>Ainda Falta:</span>
+                    <strong style="color: var(--danger); font-size: 1.2rem;">R$ ${servicoEmEdicao.valorPendente.toFixed(2)}</strong>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('pagamentoInfo').innerHTML = pagamentoInfoHTML;
+        document.getElementById('valorPagamentoNovo').value = servicoEmEdicao.valorPendente.toFixed(2);
+        document.getElementById('dataPagamento').value = new Date().toISOString().split('T')[0];
+        
+        fecharModal('modalEditarServico');
+        document.getElementById('modalAdicionarPagamento').classList.add('active');
+    }
+    
+    function registrarPagamento() {
+        if (!servicoEmEdicao) return;
+        
+        const valorNovo = parseFloat(document.getElementById('valorPagamentoNovo').value);
+        const dataPag = document.getElementById('dataPagamento').value;
+        
+        if (isNaN(valorNovo) || valorNovo <= 0) {
+            alert('❌ Valor inválido!');
+            return;
+        }
+        
+        if (!dataPag) {
+            alert('❌ Data do recebimento é obrigatória!');
+            return;
+        }
+        
+        if (valorNovo > servicoEmEdicao.valorPendente) {
+            alert(`❌ Valor maior que o pendente!\n\nPendente: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
+            return;
+        }
+        
+        const dataPagamentoFormatada = new Date(dataPag + 'T00:00:00').toLocaleDateString('pt-BR');
+        
+        const novoPagamento = {
+            id: Date.now(),
+            valor: valorNovo,
+            data: dataPagamentoFormatada,
+            hora: new Date().toLocaleTimeString('pt-BR')
+        };
+        
+        if (!servicoEmEdicao.pagamentos) {
+            servicoEmEdicao.pagamentos = [];
+        }
+        
+        servicoEmEdicao.pagamentos.push(novoPagamento);
+        servicoEmEdicao.valorPago += valorNovo;
+        servicoEmEdicao.valorPendente -= valorNovo;
+        
+        const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
+        const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
+        adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
+        
+        salvarDados();
+        atualizarInterface();
+        fecharModal('modalAdicionarPagamento');
+        
+        if (servicoEmEdicao.valorPendente === 0) {
+            alert(`✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n🎉 Serviço TOTALMENTE pago!`);
+        } else {
+            alert(`✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n⏳ Ainda falta: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
+        }
+    }
+    
+    function filtrarServicos(filtro) {
+        filtroAtual = filtro;
+        
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        renderizarServicos();
+    }
+    
+    // ==================== INTERFACE ====================
+    
+    function verificarAlertas() {
+        const alertas = [];
+        
+        const pendentes = estado.servicos.filter(s => s.valorPendente > 0 && s.valorPago > 0);
+        if (pendentes.length > 0) {
+            const total = pendentes.reduce((sum, s) => sum + s.valorPendente, 0);
+            alertas.push({
+                tipo: 'warning',
+                texto: `💰 ${pendentes.length} serviço(s) com pagamento PARCIAL (Falta receber: R$ ${total.toFixed(2)})`
+            });
+        }
+        
+        const entregues = estado.servicos.filter(s => s.valorPago === 0 && s.status === 'entregue');
+        if (entregues.length > 0) {
+            const total = entregues.reduce((sum, s) => sum + s.valorTotal, 0);
+            alertas.push({
+                tipo: 'info',
+                texto: `📋 ${entregues.length} serviço(s) entregue(s) SEM pagamento (Total: R$ ${total.toFixed(2)})`
+            });
+        }
+        
+        const container = document.getElementById('alertsContainer');
+        if (alertas.length > 0) {
+            container.innerHTML = alertas.map(a => `
+                <div class="alert alert-${a.tipo}">
+                    <span class="alert-icon">${a.tipo === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                    <div>${a.texto}</div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '';
+        }
+    }
+    
+    function atualizarDashboard() {
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+        
+        let faturamentoMes = 0;
+        let totalRecebidoMes = 0;
+        
+        estado.servicos.forEach(s => {
+            if (s.pagamentos && s.pagamentos.length > 0) {
+                s.pagamentos.forEach(p => {
+                    const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
+                    if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
+                        faturamentoMes += p.valor;
+                        totalRecebidoMes += p.valor;
+                    }
+                });
+            }
+        });
+        
+        const totalReceber = estado.servicos.reduce((sum, s) => sum + s.valorPendente, 0);
+        const qtdPendente = estado.servicos.filter(s => s.valorPendente > 0).length;
+        const qtdPago = estado.servicos.filter(s => s.valorPendente === 0 && s.valorTotal > 0).length;
+        const servicosAtivos = estado.servicos.filter(s => s.valorPendente > 0 || (s.status !== 'pago' && s.status !== 'entregue')).length;
+        
+        document.getElementById('faturamentoMes').textContent = `R$ ${faturamentoMes.toFixed(2)}`;
+        document.getElementById('totalReceber').textContent = `R$ ${totalReceber.toFixed(2)}`;
+        document.getElementById('qtdPendente').textContent = `${qtdPendente} serviço${qtdPendente !== 1 ? 's' : ''}`;
+        document.getElementById('totalRecebido').textContent = `R$ ${totalRecebidoMes.toFixed(2)}`;
+        document.getElementById('qtdPago').textContent = `${qtdPago} pago${qtdPago !== 1 ? 's' : ''}`;
+        document.getElementById('servicosAtivos').textContent = servicosAtivos;
+    }
+    
+    function renderizarServicos() {
+        let servicos = estado.servicos;
+        
+        if (filtroAtual !== 'todos') {
+            servicos = servicos.filter(s => {
+                const statusAtual = calcularStatusServico(s);
+                return statusAtual === filtroAtual;
+            });
+        }
+        
+        switch(filtroAtual) {
+            case 'agendado':
+                servicos.sort((a, b) => {
+                    if (!a.dataServico) return 1;
+                    if (!b.dataServico) return -1;
+                    return new Date(a.dataServico) - new Date(b.dataServico);
+                });
+                break;
             
-            document.getElementById('editId').value = servico.id;
-            document.getElementById('editStatus').value = servico.status || 'entregue';
-            document.getElementById('editNomeCliente').value = servico.cliente;
-            document.getElementById('editContatoCliente').value = servico.contato || '';
-            document.getElementById('editTipoServico').value = servico.tipo;
-            document.getElementById('editValorServico').value = servico.valorTotal;
-            document.getElementById('editDataServico').value = servico.dataServico || '';
-            document.getElementById('editPrazoEntrega').value = servico.prazoEntrega || '';
-            document.getElementById('editObservacoes').value = servico.observacoes || '';
+            case 'producao':
+                servicos.sort((a, b) => {
+                    if (!a.prazoEntrega) return 1;
+                    if (!b.prazoEntrega) return -1;
+                    return new Date(a.prazoEntrega) - new Date(b.prazoEntrega);
+                });
+                break;
             
-            const statusAtual = calcularStatusServico(servico);
-            const paymentInfoHTML = `
-                <div class="payment-info ${statusAtual === 'pago' ? 'completo' : statusAtual === 'parcial' ? 'parcial' : ''}">
-                    <div class="payment-row">
-                        <span>Valor Total:</span>
-                        <strong>R$ ${servico.valorTotal.toFixed(2)}</strong>
+            case 'parcial':
+            case 'pago':
+                servicos.sort((a, b) => {
+                    const ultimoPagA = a.pagamentos && a.pagamentos.length > 0 
+                        ? a.pagamentos[a.pagamentos.length - 1].id 
+                        : 0;
+                    const ultimoPagB = b.pagamentos && b.pagamentos.length > 0 
+                        ? b.pagamentos[b.pagamentos.length - 1].id 
+                        : 0;
+                    return ultimoPagB - ultimoPagA;
+                });
+                break;
+            
+            default:
+                servicos.sort((a, b) => b.id - a.id);
+        }
+        
+        const container = document.getElementById('listaServicos');
+        
+        if (servicos.length === 0) {
+            container.innerHTML = `
+                <div class="text-center" style="padding: 3rem; color: #999;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                    <p>Nenhum serviço ${filtroAtual !== 'todos' ? 'neste status' : 'registrado'}.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = servicos.map(s => {
+            const statusAtual = calcularStatusServico(s);
+            
+            return `
+                <div class="service-item ${statusAtual}" onclick="abrirModalEditarServico(${s.id})">
+                    <div class="service-header">
+                        <div>
+                            <div class="service-title">${s.cliente}</div>
+                            <span class="badge badge-${statusAtual}">${statusNomes[statusAtual]}</span>
+                        </div>
+                        <div class="service-value">R$ ${s.valorTotal.toFixed(2)}</div>
                     </div>
-                    <div class="payment-row">
-                        <span>Já Pago:</span>
-                        <strong style="color: var(--success);">R$ ${servico.valorPago.toFixed(2)}</strong>
+                    
+                    <div class="service-info">
+                        <div class="service-detail">
+                            <strong>Serviço:</strong> ${tiposServicoNomes[s.tipo]}
+                        </div>
+                        <div class="service-detail">
+                            <strong>📆 Entrada:</strong> ${s.dataEntrada}
+                        </div>
+                        ${s.dataServico ? `
+                            <div class="service-detail date-highlight">
+                                <strong>📅 Agendamento:</strong> ${new Date(s.dataServico + 'T00:00:00').toLocaleDateString('pt-BR')}
+                            </div>
+                        ` : ''}
+                        ${s.prazoEntrega ? `
+                            <div class="service-detail">
+                                <strong>⏰ Prazo:</strong> ${new Date(s.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR')}
+                            </div>
+                        ` : ''}
+                        ${s.contato ? `<div class="service-detail"><strong>Contato:</strong> ${s.contato}</div>` : ''}
                     </div>
-                    <div class="payment-row">
-                        <span>Pendente:</span>
-                        <strong style="color: ${servico.valorPendente > 0 ? 'var(--danger)' : 'var(--success)'};">
-                            R$ ${servico.valorPendente.toFixed(2)}
-                        </strong>
-                    </div>
-                    ${servico.pagamentos && servico.pagamentos.length > 0 ? `
-                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
-                            <strong>Histórico de Pagamentos:</strong>
-                            ${servico.pagamentos.map(p => `
-                                <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                                    ${p.data} ${p.hora} - R$ ${p.valor.toFixed(2)}
+                    
+                    ${(statusAtual === 'parcial' || statusAtual === 'pago') ? `
+                        <div class="payment-info ${statusAtual}">
+                            <div class="payment-row">
+                                <span>Pago:</span>
+                                <strong style="color: var(--success);">R$ ${s.valorPago.toFixed(2)}</strong>
+                            </div>
+                            ${statusAtual === 'parcial' ? `
+                                <div class="payment-row">
+                                    <span>Pendente:</span>
+                                    <strong style="color: var(--danger);">R$ ${s.valorPendente.toFixed(2)}</strong>
                                 </div>
-                            `).join('')}
+                            ` : ''}
                         </div>
                     ` : ''}
                 </div>
             `;
-            
-            document.getElementById('editPaymentInfo').innerHTML = paymentInfoHTML;
-            
-            document.getElementById('modalEditarServico').classList.add('active');
+        }).join('');
+    }
+    
+    function atualizarInterface() {
+        verificarAlertas();
+        atualizarDashboard();
+        renderizarServicos();
+    }
+    
+    // ==================== RELATÓRIOS ====================
+    
+    function exportarRelatorioMEI() {
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+        
+        const pagamentos = [];
+        
+        estado.servicos.forEach(s => {
+            if (s.pagamentos && s.pagamentos.length > 0) {
+                s.pagamentos.forEach(p => {
+                    const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
+                    if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
+                        pagamentos.push({
+                            'Data Recebimento': p.data,
+                            'Cliente': s.cliente,
+                            'Serviço': tiposServicoNomes[s.tipo],
+                            'Valor': p.valor
+                        });
+                    }
+                });
+            }
+        });
+        
+        if (pagamentos.length === 0) {
+            alert('ℹ️ Nenhum pagamento recebido neste mês!');
+            return;
         }
         
-        function salvarEdicaoServico() {
-            const id = parseInt(document.getElementById('editId').value);
-            const servico = estado.servicos.find(s => s.id === id);
-            if (!servico) return;
-            
-            servico.status = document.getElementById('editStatus').value;
-            servico.cliente = document.getElementById('editNomeCliente').value.trim();
-            servico.contato = document.getElementById('editContatoCliente').value.trim();
-            servico.tipo = document.getElementById('editTipoServico').value;
-            servico.dataServico = document.getElementById('editDataServico').value;
-            servico.prazoEntrega = document.getElementById('editPrazoEntrega').value;
-            servico.observacoes = document.getElementById('editObservacoes').value.trim();
-            
-            salvarDados();
-            atualizarInterface();
-            fecharModal('modalEditarServico');
-            alert('✅ Serviço atualizado!');
+        const ws = XLSX.utils.json_to_sheet(pagamentos);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Faturamento MEI");
+        
+        const mesNome = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        XLSX.writeFile(wb, `faturamento-mei-${mesNome}.xlsx`);
+        
+        alert('✅ Relatório MEI exportado!');
+    }
+    
+    function backupDados() {
+        const data = new Date().toISOString().split('T')[0];
+        const arquivo = `backup-servicos-${data}.json`;
+        const conteudo = JSON.stringify(estado, null, 2);
+        
+        const blob = new Blob([conteudo], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = arquivo;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        alert('✅ Backup realizado!');
+    }
+    
+    // ==================== PERSISTÊNCIA ====================
+    
+    function salvarDados() {
+        console.log('💾 Salvando dados...');
+        
+        try {
+            localStorage.setItem('servicosMEI_v2', JSON.stringify(estado));
+            console.log('✅ Salvo localmente');
+        } catch (error) {
+            console.error('❌ Erro ao salvar localmente:', error);
         }
         
-        function abrirModalAdicionarPagamento() {
-            if (!servicoEmEdicao) return;
-            
-            const pagamentoInfoHTML = `
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span>Valor Total:</span>
-                        <strong>R$ ${servicoEmEdicao.valorTotal.toFixed(2)}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span>Já Pago:</span>
-                        <strong style="color: var(--success);">R$ ${servicoEmEdicao.valorPago.toFixed(2)}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #dee2e6;">
-                        <span>Ainda Falta:</span>
-                        <strong style="color: var(--danger); font-size: 1.2rem;">R$ ${servicoEmEdicao.valorPendente.toFixed(2)}</strong>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('pagamentoInfo').innerHTML = pagamentoInfoHTML;
-            document.getElementById('valorPagamentoNovo').value = servicoEmEdicao.valorPendente.toFixed(2);
-            document.getElementById('dataPagamento').value = new Date().toISOString().split('T')[0];
-            
-            fecharModal('modalEditarServico');
-            document.getElementById('modalAdicionarPagamento').classList.add('active');
+        salvarNaNuvem();
+    }
+    
+    function carregarDados() {
+        console.log('📂 Carregando dados...');
+        
+        if (firebaseConfigured) {
+            console.log('☁️ Firebase ativo, listener vai carregar os dados');
+            return;
         }
         
-        function registrarPagamento() {
-            if (!servicoEmEdicao) return;
-            
-            const valorNovo = parseFloat(document.getElementById('valorPagamentoNovo').value);
-            const dataPag = document.getElementById('dataPagamento').value;
-            
-            if (isNaN(valorNovo) || valorNovo <= 0) {
-                alert('❌ Valor inválido!');
-                return;
+        console.log('💾 Carregando do localStorage...');
+        try {
+            const dadosSalvos = localStorage.getItem('servicosMEI_v2');
+            if (dadosSalvos) {
+                estado = JSON.parse(dadosSalvos);
+                console.log('✅ Dados carregados do localStorage');
+                console.log('📊 Serviços:', estado.servicos?.length || 0);
+            } else {
+                console.log('ℹ️ Nenhum dado local encontrado');
             }
-            
-            if (!dataPag) {
-                alert('❌ Data do recebimento é obrigatória!');
-                return;
-            }
-            
-            if (valorNovo > servicoEmEdicao.valorPendente) {
-                alert(`❌ Valor maior que o pendente!\n\nPendente: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
-                return;
-            }
-            
-            const dataPagamentoFormatada = new Date(dataPag + 'T00:00:00').toLocaleDateString('pt-BR');
-            
-            const novoPagamento = {
-                id: Date.now(),
-                valor: valorNovo,
-                data: dataPagamentoFormatada,
-                hora: new Date().toLocaleTimeString('pt-BR')
-            };
-            
-            if (!servicoEmEdicao.pagamentos) {
-                servicoEmEdicao.pagamentos = [];
-            }
-            
-            servicoEmEdicao.pagamentos.push(novoPagamento);
-            servicoEmEdicao.valorPago += valorNovo;
-            servicoEmEdicao.valorPendente -= valorNovo;
-            
-            const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
-            const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
-            adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
-            const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
-const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
-console.log('🎵 Adicionando renda extra no financeiro...');
-adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
+        } catch (error) {
+            console.error('❌ Erro ao carregar localStorage:', error);
+        }
+        
+        atualizarInterface();
+    }
+    
+    // ==================== MODAIS ====================
+    
+    function fecharModal(idModal) {
+        document.getElementById(idModal).classList.remove('active');
+    }
+    
+    // ==================== INICIALIZAÇÃO ====================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Iniciando Sistema de Serviços MEI v2.1...');
+        
+        inicializarFirebase();
+        
+        setTimeout(() => {
+            carregarDados();
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            console.log('✅ Sistema carregado!');
+        }, 1500);
+    });
+    
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+    });
+</script>
+```
 
-            salvarDados();
-            atualizarInterface();
-            fecharModal('modalAdicionarPagamento');
-            
-            if (servicoEmEdicao.valorPendente === 0) {
-                alert(`✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n🎉 Serviço TOTALMENTE pago!`);
-            } else {
-                alert(`✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n⏳ Ainda falta: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
-            }
-        }
-        
-        function filtrarServicos(filtro) {
-            filtroAtual = filtro;
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            renderizarServicos();
-        }
-        
-        // ==================== INTERFACE ====================
-        
-        function verificarAlertas() {
-            const alertas = [];
-            
-            const pendentes = estado.servicos.filter(s => s.valorPendente > 0 && s.valorPago > 0);
-            if (pendentes.length > 0) {
-                const total = pendentes.reduce((sum, s) => sum + s.valorPendente, 0);
-                alertas.push({
-                    tipo: 'warning',
-                    texto: `💰 ${pendentes.length} serviço(s) com pagamento PARCIAL (Falta receber: R$ ${total.toFixed(2)})`
-                });
-            }
-            
-            const entregues = estado.servicos.filter(s => s.valorPago === 0 && s.status === 'entregue');
-            if (entregues.length > 0) {
-                const total = entregues.reduce((sum, s) => sum + s.valorTotal, 0);
-                alertas.push({
-                    tipo: 'info',
-                    texto: `📋 ${entregues.length} serviço(s) entregue(s) SEM pagamento (Total: R$ ${total.toFixed(2)})`
-                });
-            }
-            
-            const container = document.getElementById('alertsContainer');
-            if (alertas.length > 0) {
-                container.innerHTML = alertas.map(a => `
-                    <div class="alert alert-${a.tipo}">
-                        <span class="alert-icon">${a.tipo === 'warning' ? '⚠️' : 'ℹ️'}</span>
-                        <div>${a.texto}</div>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '';
-            }
-        }
-        
-        function atualizarDashboard() {
-            const hoje = new Date();
-            const mesAtual = hoje.getMonth();
-            const anoAtual = hoje.getFullYear();
-            
-            let faturamentoMes = 0;
-            let totalRecebidoMes = 0;
-            
-            estado.servicos.forEach(s => {
-                if (s.pagamentos && s.pagamentos.length > 0) {
-                    s.pagamentos.forEach(p => {
-                        const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
-                        if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
-                            faturamentoMes += p.valor;
-                            totalRecebidoMes += p.valor;
-                        }
-                    });
-                }
-            });
-            
-            const totalReceber = estado.servicos.reduce((sum, s) => sum + s.valorPendente, 0);
-            const qtdPendente = estado.servicos.filter(s => s.valorPendente > 0).length;
-            const qtdPago = estado.servicos.filter(s => s.valorPendente === 0 && s.valorTotal > 0).length;
-            const servicosAtivos = estado.servicos.filter(s => s.valorPendente > 0 || (s.status !== 'pago' && s.status !== 'entregue')).length;
-            
-            document.getElementById('faturamentoMes').textContent = `R$ ${faturamentoMes.toFixed(2)}`;
-            document.getElementById('totalReceber').textContent = `R$ ${totalReceber.toFixed(2)}`;
-            document.getElementById('qtdPendente').textContent = `${qtdPendente} serviço${qtdPendente !== 1 ? 's' : ''}`;
-            document.getElementById('totalRecebido').textContent = `R$ ${totalRecebidoMes.toFixed(2)}`;
-            document.getElementById('qtdPago').textContent = `${qtdPago} pago${qtdPago !== 1 ? 's' : ''}`;
-            document.getElementById('servicosAtivos').textContent = servicosAtivos;
-        }
-        
-        function renderizarServicos() {
-            let servicos = estado.servicos;
-            
-            if (filtroAtual !== 'todos') {
-                servicos = servicos.filter(s => {
-                    const statusAtual = calcularStatusServico(s);
-                    return statusAtual === filtroAtual;
-                });
-            }
-            
-            // ✨ ORDENAÇÃO INTELIGENTE POR FILTRO
-            switch(filtroAtual) {
-                case 'agendado':
-                    servicos.sort((a, b) => {
-                        if (!a.dataServico) return 1;
-                        if (!b.dataServico) return -1;
-                        return new Date(a.dataServico) - new Date(b.dataServico);
-                    });
-                    break;
-                
-                case 'producao':
-                    servicos.sort((a, b) => {
-                        if (!a.prazoEntrega) return 1;
-                        if (!b.prazoEntrega) return -1;
-                        return new Date(a.prazoEntrega) - new Date(b.prazoEntrega);
-                    });
-                    break;
-                
-                case 'parcial':
-                case 'pago':
-                    servicos.sort((a, b) => {
-                        const ultimoPagA = a.pagamentos && a.pagamentos.length > 0 
-                            ? a.pagamentos[a.pagamentos.length - 1].id 
-                            : 0;
-                        const ultimoPagB = b.pagamentos && b.pagamentos.length > 0 
-                            ? b.pagamentos[b.pagamentos.length - 1].id 
-                            : 0;
-                        return ultimoPagB - ultimoPagA;
-                    });
-                    break;
-                
-                default:
-                    servicos.sort((a, b) => b.id - a.id);
-            }
-            
-            const container = document.getElementById('listaServicos');
-            
-            if (servicos.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center" style="padding: 3rem; color: #999;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
-                        <p>Nenhum serviço ${filtroAtual !== 'todos' ? 'neste status' : 'registrado'}.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = servicos.map(s => {
-                const statusAtual = calcularStatusServico(s);
-                
-                return `
-                    <div class="service-item ${statusAtual}" onclick="abrirModalEditarServico(${s.id})">
-                        <div class="service-header">
-                            <div>
-                                <div class="service-title">${s.cliente}</div>
-                                <span class="badge badge-${statusAtual}">${statusNomes[statusAtual]}</span>
-                            </div>
-                            <div class="service-value">R$ ${s.valorTotal.toFixed(2)}</div>
-                        </div>
-                        
-                        <div class="service-info">
-                            <div class="service-detail">
-                                <strong>Serviço:</strong> ${tiposServicoNomes[s.tipo]}
-                            </div>
-                            <div class="service-detail">
-                                <strong>📆 Entrada:</strong> ${s.dataEntrada}
-                            </div>
-                            ${s.dataServico ? `
-                                <div class="service-detail date-highlight">
-                                    <strong>📅 Agendamento:</strong> ${new Date(s.dataServico + 'T00:00:00').toLocaleDateString('pt-BR')}
-                                </div>
-                            ` : ''}
-                            ${s.prazoEntrega ? `
-                                <div class="service-detail">
-                                    <strong>⏰ Prazo:</strong> ${new Date(s.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR')}
-                                </div>
-                            ` : ''}
-                            ${s.contato ? `<div class="service-detail"><strong>Contato:</strong> ${s.contato}</div>` : ''}
-                        </div>
-                        
-                        ${(statusAtual === 'parcial' || statusAtual === 'pago') ? `
-                            <div class="payment-info ${statusAtual}">
-                                <div class="payment-row">
-                                    <span>Pago:</span>
-                                    <strong style="color: var(--success);">R$ ${s.valorPago.toFixed(2)}</strong>
-                                </div>
-                                ${statusAtual === 'parcial' ? `
-                                    <div class="payment-row">
-                                        <span>Pendente:</span>
-                                        <strong style="color: var(--danger);">R$ ${s.valorPendente.toFixed(2)}</strong>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function atualizarInterface() {
-            verificarAlertas();
-            atualizarDashboard();
-            renderizarServicos();
-        }
-        
-        // ==================== RELATÓRIOS ====================
-        
-        function exportarRelatorioMEI() {
-            const hoje = new Date();
-            const mesAtual = hoje.getMonth();
-            const anoAtual = hoje.getFullYear();
-            
-            const pagamentos = [];
-            
-            estado.servicos.forEach(s => {
-                if (s.pagamentos && s.pagamentos.length > 0) {
-                    s.pagamentos.forEach(p => {
-                        const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
-                        if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
-                            pagamentos.push({
-                                'Data Recebimento': p.data,
-                                'Cliente': s.cliente,
-                                'Serviço': tiposServicoNomes[s.tipo],
-                                'Valor': p.valor
-                            });
-                        }
-                    });
-                }
-            });
-            
-            if (pagamentos.length === 0) {
-                alert('ℹ️ Nenhum pagamento recebido neste mês!');
-                return;
-            }
-            
-            const ws = XLSX.utils.json_to_sheet(pagamentos);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Faturamento MEI");
-            
-            const mesNome = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            XLSX.writeFile(wb, `faturamento-mei-${mesNome}.xlsx`);
-            
-            alert('✅ Relatório MEI exportado!');
-        }
-        
-        function backupDados() {
-            const data = new Date().toISOString().split('T')[0];
-            const arquivo = `backup-servicos-${data}.json`;
-            const conteudo = JSON.stringify(estado, null, 2);
-            
-            const blob = new Blob([conteudo], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = arquivo;
-            link.click();
-            URL.revokeObjectURL(url);
-            
-            alert('✅ Backup realizado!');
-        }
-        
-        // ==================== PERSISTÊNCIA ====================
-        
-        function salvarDados() {
-    console.log('💾 Salvando dados...');
-    
-    // 1. Salvar localmente (backup imediato)
-    try {
-        localStorage.setItem('servicosMEI_v2', JSON.stringify(estado));
-        console.log('✅ Salvo localmente');
-    } catch (error) {
-        console.error('❌ Erro ao salvar localmente:', error);
-    }
-    
-    // 2. Salvar na nuvem (sincronização)
-    salvarNaNuvem();
-}
-        
-        function carregarDados() {
-    console.log('📂 Carregando dados...');
-    
-    // Se Firebase configurado, listener carrega automaticamente
-    if (firebaseConfigured) {
-        console.log('☁️ Firebase ativo, listener vai carregar os dados');
-        return;
-    }
-    
-    // Fallback: carregar do localStorage
-    console.log('💾 Carregando do localStorage...');
-    try {
-        const dadosSalvos = localStorage.getItem('servicosMEI_v2');
-        if (dadosSalvos) {
-            estado = JSON.parse(dadosSalvos);
-            console.log('✅ Dados carregados do localStorage');
-            console.log('📊 Serviços:', estado.servicos?.length || 0);
-        } else {
-            console.log('ℹ️ Nenhum dado local encontrado');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao carregar localStorage:', error);
-    }
-    
-    atualizarInterface();
-}
-        
-        // ==================== MODAIS ====================
-        
-        function fecharModal(idModal) {
-            document.getElementById(idModal).classList.remove('active');
-        }
-        
-        // ==================== INICIALIZAÇÃO ====================
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Iniciando Sistema de Serviços MEI v2.1...');
-            
-            inicializarFirebase();
-            
-            setTimeout(() => {
-                carregarDados();
-                document.getElementById('loadingScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                console.log('✅ Sistema carregado!');
-            }, 1500);
-        });
-        
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) modal.classList.remove('active');
-            });
-        });
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.classList.remove('active');
-                });
-            }
-        });
-    </script>
 </body>
 </html>
