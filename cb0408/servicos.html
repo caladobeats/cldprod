@@ -1191,7 +1191,11 @@
             const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
             const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
             adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
-            
+            const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
+const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
+console.log('🎵 Adicionando renda extra no financeiro...');
+adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
+
             salvarDados();
             atualizarInterface();
             fecharModal('modalAdicionarPagamento');
