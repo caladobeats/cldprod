@@ -764,45 +764,88 @@
         // ==================== FIREBASE ====================
         
         function inicializarFirebase() {
-            try {
-                firebaseApp = firebase.initializeApp(firebaseConfig);
-                database = firebaseApp.database();
-                firebaseConfigured = true;
-                
-                atualizarStatusSync(true, '☁️ Conectado - Sincronização Ativa');
-                
-                database.ref('servicos-mei').on('value', (snapshot) => {
-                    const dados = snapshot.val();
-                    if (dados) {
-                        estado = dados;
-                        atualizarInterface();
-                    }
-                });
-                
-                database.ref('servicos-mei').once('value', (snapshot) => {
-                    if (!snapshot.exists()) {
-                        salvarNaNuvem();
-                    }
-                });
-                
-                return true;
-            } catch (error) {
-                console.error('Erro Firebase:', error);
-                atualizarStatusSync(false, '❌ Erro ao conectar');
-                return false;
+    try {
+        console.log('🚀 Iniciando Firebase...');
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+        database = firebaseApp.database();
+        firebaseConfigured = true;
+        
+        console.log('✅ Firebase inicializado!');
+        atualizarStatusSync(true, '☁️ Conectando...');
+        
+        // CRÍTICO: Listener em TEMPO REAL (.on não .once!)
+        database.ref('servicos-mei').on('value', (snapshot) => {
+            const dados = snapshot.val();
+            if (dados) {
+                console.log('📥 Dados recebidos do Firebase!');
+                console.log('📊 Serviços:', dados.servicos?.length || 0);
+                estado = dados;
+                atualizarInterface();
+                atualizarStatusSync(true, '☁️ Sincronizado');
+            } else {
+                console.log('ℹ️ Nenhum dado no Firebase, criando estrutura...');
+                salvarNaNuvem();
             }
-        }
+        }, (error) => {
+            console.error('❌ Erro no listener:', error);
+            atualizarStatusSync(false, '❌ Erro ao conectar');
+        });
+        
+        // Teste de conexão
+        testarConexaoFirebase();
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao inicializar Firebase:', error);
+        firebaseConfigured = false;
+        atualizarStatusSync(false, '❌ Erro na inicialização');
+        return false;
+    }
+}
         
         function salvarNaNuvem() {
-            if (!firebaseConfigured || !database) return;
-            
-            try {
-                database.ref('servicos-mei').set(estado);
-                console.log('✅ Dados salvos na nuvem');
-            } catch (error) {
-                console.error('❌ Erro ao salvar:', error);
+    if (!firebaseConfigured || !database) {
+        console.warn('⚠️ Firebase não configurado, salvando apenas localmente');
+        return;
+    }
+    
+    try {
+        console.log('💾 Salvando no Firebase...');
+        console.log('📊 Dados:', estado.servicos?.length || 0, 'serviços');
+        
+        database.ref('servicos-mei').set(estado, (error) => {
+            if (error) {
+                console.error('❌ Erro ao salvar no Firebase:', error);
+                atualizarStatusSync(false, '❌ Erro ao salvar');
+            } else {
+                console.log('✅ SALVO NO FIREBASE COM SUCESSO!');
+                atualizarStatusSync(true, '☁️ Sincronizado');
             }
+        });
+    } catch (error) {
+        console.error('❌ Erro crítico ao salvar:', error);
+        atualizarStatusSync(false, '❌ Erro crítico');
+    }
+}
+        function testarConexaoFirebase() {
+    if (!database) {
+        console.warn('⚠️ Database não inicializado');
+        return;
+    }
+    
+    console.log('🔍 Testando conexão Firebase...');
+    
+    const connectedRef = database.ref('.info/connected');
+    connectedRef.on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+            console.log('✅ FIREBASE CONECTADO!');
+            atualizarStatusSync(true, '☁️ Conectado - Sincronização Ativa');
+        } else {
+            console.log('⚠️ FIREBASE DESCONECTADO');
+            atualizarStatusSync(false, '⚠️ Offline - Salvando Localmente');
         }
+    });
+}
         
         function atualizarStatusSync(conectado, texto) {
             const statusEl = document.getElementById('syncStatus');
@@ -1414,28 +1457,46 @@
         // ==================== PERSISTÊNCIA ====================
         
         function salvarDados() {
-            try {
-                localStorage.setItem('servicosMEI_v2', JSON.stringify(estado));
-            } catch (error) {
-                console.error('Erro ao salvar localmente:', error);
-            }
-            salvarNaNuvem();
-        }
+    console.log('💾 Salvando dados...');
+    
+    // 1. Salvar localmente (backup imediato)
+    try {
+        localStorage.setItem('servicosMEI_v2', JSON.stringify(estado));
+        console.log('✅ Salvo localmente');
+    } catch (error) {
+        console.error('❌ Erro ao salvar localmente:', error);
+    }
+    
+    // 2. Salvar na nuvem (sincronização)
+    salvarNaNuvem();
+}
         
         function carregarDados() {
-            if (firebaseConfigured) return;
-            
-            try {
-                const dadosSalvos = localStorage.getItem('servicosMEI_v2');
-                if (dadosSalvos) {
-                    estado = JSON.parse(dadosSalvos);
-                }
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-            }
-            
-            atualizarInterface();
+    console.log('📂 Carregando dados...');
+    
+    // Se Firebase configurado, listener carrega automaticamente
+    if (firebaseConfigured) {
+        console.log('☁️ Firebase ativo, listener vai carregar os dados');
+        return;
+    }
+    
+    // Fallback: carregar do localStorage
+    console.log('💾 Carregando do localStorage...');
+    try {
+        const dadosSalvos = localStorage.getItem('servicosMEI_v2');
+        if (dadosSalvos) {
+            estado = JSON.parse(dadosSalvos);
+            console.log('✅ Dados carregados do localStorage');
+            console.log('📊 Serviços:', estado.servicos?.length || 0);
+        } else {
+            console.log('ℹ️ Nenhum dado local encontrado');
         }
+    } catch (error) {
+        console.error('❌ Erro ao carregar localStorage:', error);
+    }
+    
+    atualizarInterface();
+}
         
         // ==================== MODAIS ====================
         
