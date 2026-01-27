@@ -866,10 +866,61 @@
         // ==================== INTEGRAÇÃO COM SISTEMA FINANCEIRO ====================
         
         function adicionarRendaExtraNoFinanceiro(valor, descricao) {
-            if (!firebaseConfigured || !database) {
-                console.warn('Firebase não configurado');
-                return;
+    if (!firebaseConfigured || !database) {
+        console.warn('⚠️ Firebase não configurado');
+        return;
+    }
+    
+    try {
+        console.log('💰 Adicionando R$', valor, 'ao financeiro...');
+        console.log('📝 Descrição:', descricao);
+        
+        database.ref('financeiro').once('value', (snapshot) => {
+            const financeiro = snapshot.val() || {
+                saldoDia20: 0,
+                saldoDia5: 0,
+                rendaExtra: 0,
+                colchao: 0,
+                contas: [],
+                gastos: [],
+                historico: [],
+                mesesFechados: []
+            };
+            
+            console.log('📊 Renda Extra ANTES:', financeiro.rendaExtra);
+            
+            financeiro.rendaExtra = (financeiro.rendaExtra || 0) + valor;
+            
+            console.log('📊 Renda Extra DEPOIS:', financeiro.rendaExtra);
+            
+            if (!financeiro.historico) {
+                financeiro.historico = [];
             }
+            
+            financeiro.historico.push({
+                id: Date.now(),
+                data: new Date().toLocaleString('pt-BR'),
+                desc: descricao,
+                valor: valor,
+                tipo: 'entrada'
+            });
+            
+            database.ref('financeiro').set(financeiro, (error) => {
+                if (error) {
+                    console.error('❌ Erro ao salvar financeiro:', error);
+                    alert('⚠️ Erro ao integrar com Sistema Financeiro!');
+                } else {
+                    console.log('✅ Sistema Financeiro atualizado!');
+                    console.log('💰 Novo valor Renda Extra:', financeiro.rendaExtra);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('❌ Erro crítico:', error);
+        alert('⚠️ Erro crítico ao integrar!');
+    }
+}
+
             
             try {
                 database.ref('financeiro').once('value', (snapshot) => {
