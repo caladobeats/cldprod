@@ -869,59 +869,90 @@
     
     // ==================== INTEGRAÇÃO COM SISTEMA FINANCEIRO ====================
     
-    function adicionarRendaExtraNoFinanceiro(valor, descricao) {
-        if (!firebaseConfigured || !database) {
-            console.warn('⚠️ Firebase não configurado');
-            return;
-        }
-        
-        try {
-            console.log('💰 Adicionando R$', valor.toFixed(2), 'ao financeiro...');
-            console.log('📝 Descrição:', descricao);
-            
-            database.ref('financeiro').once('value', (snapshot) => {
-                const financeiro = snapshot.val() || {
-                    saldoDia20: 0,
-                    saldoDia5: 0,
-                    rendaExtra: 0,
-                    colchao: 0,
-                    contas: [],
-                    gastos: [],
-                    historico: [],
-                    mesesFechados: []
-                };
-                
-                console.log('📊 Renda Extra ANTES:', financeiro.rendaExtra);
-                
-                financeiro.rendaExtra = (financeiro.rendaExtra || 0) + valor;
-                
-                console.log('📊 Renda Extra DEPOIS:', financeiro.rendaExtra);
-                
-                if (!financeiro.historico) {
-                    financeiro.historico = [];
-                }
-                
-                financeiro.historico.push({
-                    id: Date.now(),
-                    data: new Date().toLocaleString('pt-BR'),
-                    desc: descricao,
-                    valor: valor,
-                    tipo: 'entrada'
-                });
-                
-                database.ref('financeiro').set(financeiro, (error) => {
-                    if (error) {
-                        console.error('❌ Erro ao salvar financeiro:', error);
-                    } else {
-                        console.log('✅ Sistema Financeiro atualizado com sucesso!');
-                        console.log('💰 Novo valor Renda Extra:', financeiro.rendaExtra);
-                    }
-                });
-            });
-        } catch (error) {
-            console.error('❌ Erro crítico na integração:', error);
-        }
+    function adicionarRendaExtraNoFinanceiro(valor, descricao, dataRecebimento) {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔗 FUNÇÃO INTEGRAÇÃO CHAMADA');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('💰 Valor:', valor);
+    console.log('📝 Descrição:', descricao);
+    console.log('📅 Data:', dataRecebimento);
+    console.log('🔥 Firebase configurado?', firebaseConfigured);
+    console.log('🔥 Database existe?', !!database);
+    
+    if (!firebaseConfigured || !database) {
+        console.error('❌ Firebase não configurado!');
+        alert('⚠️ Firebase não está conectado!\n\nO valor foi salvo no sistema de serviços mas NÃO foi para o financeiro.\n\nConfigure Firebase ou adicione manualmente.');
+        return;
     }
+    
+    console.log('✅ Firebase OK, prosseguindo...');
+    
+    try {
+        console.log('📡 Buscando dados do financeiro...');
+        
+        database.ref('financeiro').once('value', (snapshot) => {
+            console.log('📥 Dados recebidos do Firebase');
+            
+            const financeiro = snapshot.val() || {
+                saldoDia20: 0,
+                saldoDia5: 0,
+                rendaExtra: 0,
+                colchao: 0,
+                contas: [],
+                gastos: [],
+                historico: [],
+                mesesFechados: []
+            };
+            
+            console.log('💰 Renda Extra ANTES:', financeiro.rendaExtra);
+            
+            // Adicionar valor à renda extra
+            financeiro.rendaExtra = (financeiro.rendaExtra || 0) + valor;
+            
+            console.log('💰 Renda Extra DEPOIS:', financeiro.rendaExtra);
+            
+            // Adicionar ao histórico com data correta do recebimento
+            if (!financeiro.historico) {
+                financeiro.historico = [];
+            }
+            
+            const historicoItem = {
+                id: Date.now(),
+                data: dataRecebimento + ', ' + new Date().toLocaleTimeString('pt-BR'),
+                desc: descricao,
+                valor: valor,
+                tipo: 'entrada'
+            };
+            
+            financeiro.historico.push(historicoItem);
+            console.log('📝 Adicionado ao histórico:', historicoItem);
+            
+            // Salvar de volta no Firebase
+            console.log('💾 Salvando no Firebase...');
+            
+            database.ref('financeiro').set(financeiro, (error) => {
+                if (error) {
+                    console.error('❌ ERRO ao salvar:', error);
+                    alert('❌ Erro ao integrar com sistema financeiro:\n\n' + error.message);
+                } else {
+                    console.log('✅ SUCESSO TOTAL!');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🎉 INTEGRAÇÃO COMPLETA!');
+                    console.log('💰 Novo valor Renda Extra:', financeiro.rendaExtra);
+                    console.log('📝 Descrição:', descricao);
+                    console.log('📅 Data:', dataRecebimento);
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                }
+            });
+        }, (error) => {
+            console.error('❌ Erro ao buscar dados:', error);
+            alert('❌ Erro ao acessar Firebase:\n\n' + error.message);
+        });
+    } catch (error) {
+        console.error('❌ Erro crítico:', error);
+        alert('❌ Erro crítico na integração:\n\n' + error.message);
+    }
+}
     
     // ==================== SERVIÇOS ====================
     
