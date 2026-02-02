@@ -1708,63 +1708,156 @@ const firebaseConfigPadrao = {
         // ==================== FUNÇÕES DE RELATÓRIO ====================
         
         function fecharMes() {
-            const agora = new Date();
-            const nomeMes = agora.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            
-            if (!confirm(`📊 Deseja fechar o mês de ${nomeMes}?\n\nIsso irá:\n✅ Salvar um resumo completo do mês\n✅ Limpar os gastos variáveis\n✅ Desmarcar contas pagas`)) {
-                return;
+    const agora = new Date();
+    const nomeMes = agora.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    
+    console.log('📊 INICIANDO FECHAMENTO DE MÊS:', nomeMes);
+    
+    if (!confirm(`📊 Deseja fechar o mês de ${nomeMes}?\n\nIsso irá:\n✅ Salvar um resumo completo do mês\n✅ Limpar os gastos variáveis\n✅ Desmarcar contas pagas\n\n⚠️ Esta ação não pode ser desfeita!`)) {
+        console.log('❌ Fechamento cancelado pelo usuário');
+        return;
+    }
+    
+    try {
+        console.log('🔄 Processando fechamento...');
+        
+        // Calcular totais
+        const entradas = estado.historico
+            .filter(h => h.tipo === 'entrada')
+            .reduce((sum, h) => sum + h.valor, 0);
+        
+        const saidas = estado.historico
+            .filter(h => h.tipo === 'saida')
+            .reduce((sum, h) => sum + h.valor, 0);
+        
+        const saldo = entradas - saidas;
+        
+        // Total de gastos
+        const totalGastosVariaveis = estado.gastos.reduce((sum, g) => sum + g.valor, 0);
+        const contasPagas = estado.contas.filter(c => c.pago).reduce((sum, c) => sum + c.valor, 0);
+        const totalGastos = totalGastosVariaveis + contasPagas;
+        
+        console.log('💰 Entradas:', entradas);
+        console.log('💸 Saídas:', saidas);
+        console.log('📊 Saldo:', saldo);
+        console.log('💳 Total Gastos:', totalGastos);
+        
+        // Gastos por categoria
+        const gastosPorCategoria = {};
+        estado.gastos.forEach(g => {
+            if (!gastosPorCategoria[g.categoria]) {
+                gastosPorCategoria[g.categoria] = 0;
             }
-            
-            // Calcular totais
-            const entradas = estado.historico
-                .filter(h => h.tipo === 'entrada')
-                .reduce((sum, h) => sum + h.valor, 0);
-            
-            const saidas = estado.historico
-                .filter(h => h.tipo === 'saida')
-                .reduce((sum, h) => sum + h.valor, 0);
-            
-            const saldo = entradas - saidas;
-            
-            // Total de gastos = gastos variáveis + contas pagas
-            const totalGastosVariaveis = estado.gastos.reduce((sum, g) => sum + g.valor, 0);
-            const contasPagas = estado.contas.filter(c => c.pago).reduce((sum, c) => sum + c.valor, 0);
-            const totalGastos = totalGastosVariaveis + contasPagas;
-            
-            // Criar resumo do mês
-            const resumoMes = {
-                id: Date.now(),
-                nome: nomeMes,
-                dataFechamento: agora.toLocaleDateString('pt-BR'),
-                entradas: entradas,
-                saidas: saidas,
-                saldo: saldo,
-                colchao: estado.colchao,
-                totalGastos: totalGastos,
-                contasPagas: contasPagas,
-                transacoes: estado.historico.length,
-                gastosPorCategoria: calcularGastosPorCategoria(),
-                historicoCompleto: [...estado.historico],
-                gastosCompleto: [...estado.gastos]
-            };
-            
-            // Adicionar ao histórico de meses
-            estado.mesesFechados.unshift(resumoMes);
-            
-            // Limpar gastos
-            estado.gastos = [];
-            
-            // Desmarcar contas
-            estado.contas.forEach(c => c.pago = false);
-            
-            // Limpar histórico do mês
-            estado.historico = [];
-            
-            salvarDados();
-            atualizarInterface();
-            
-            mostrarRelatorioMes(resumoMes);
+            gastosPorCategoria[g.categoria] += g.valor;
+        });
+        
+        // Adicionar contas fixas pagas como categoria
+        if (contasPagas > 0) {
+            gastosPorCategoria['Contas Fixas'] = contasPagas;
         }
+        
+        // Criar resumo do mês
+        const resumoMes = {
+            id: Date.now(),
+            nome: nomeMes,
+            dataFechamento: agora.toLocaleDateString('pt-BR'),
+            entradas: entradas,
+            saidas: saidas,
+            saldo: saldo,
+            colchao: estado.colchao,
+            totalGastos: totalGastos,
+            contasPagas: contasPagas,
+            transacoes: estado.historico.length,
+            gastosPorCategoria: gastosPorCategoria,
+            historicoCompleto: [...estado.historico],
+            gastosCompleto: [...estado.gastos],
+            saldoFinalDia20: estado.saldoDia20,
+            saldoFinalDia5: estado.saldoDia5,
+            rendaExtraFinal: estado.rendaExtra
+        };
+        
+        console.log('📋 Resumo criado:', resumoMes);
+        
+        // Adicionar ao histórico de meses
+        if (!estado.mesesFechados) {
+            estado.mesesFechados = [];
+        }
+        estado.mesesFechados.unshift(resumoMes);
+        
+        console.log('✅ Adicionado aos meses fechados');
+        
+        // Limpar gastos variáveis
+        estado.gastos = [];
+        console.log('🗑️ Gastos variáveis limpos');
+        
+        // Desmarcar contas
+        estado.contas.forEach(c => c.pago = false);
+        console.log('🔄 Contas desmarcadas');
+        
+        // Limpar histórico do mês
+        estado.historico = [];
+        console.log('🗑️ Histórico limpo');
+        
+        // Salvar tudo
+        salvarDados();
+        atualizarInterface();
+        
+        console.log('✅ FECHAMENTO COMPLETO!');
+        
+        // Mostrar relatório
+        mostrarRelatorioMes(resumoMes);
+        
+    } catch (error) {
+        console.error('❌ Erro no fechamento:', error);
+        alert('❌ Erro ao fechar mês: ' + error.message + '\n\nPor favor, tire um print do console (F12) e me envie.');
+    }
+}
+
+function mostrarRelatorioMes(mes) {
+    const saldoPositivo = mes.saldo >= 0;
+    
+    let categoriasTexto = '';
+    if (mes.gastosPorCategoria && Object.keys(mes.gastosPorCategoria).length > 0) {
+        categoriasTexto = Object.entries(mes.gastosPorCategoria)
+            .map(([cat, valor]) => `  • ${cat}: R$ ${valor.toFixed(2)}`)
+            .join('\n');
+    } else {
+        categoriasTexto = '  Nenhum gasto registrado';
+    }
+    
+    alert(`
+📊 RELATÓRIO DE ${mes.nome.toUpperCase()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 RESUMO FINANCEIRO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Total de Entradas: R$ ${mes.entradas.toFixed(2)}
+❌ Total de Saídas: R$ ${mes.saidas.toFixed(2)}
+${saldoPositivo ? '📈' : '📉'} Saldo do Mês: R$ ${mes.saldo.toFixed(2)}
+
+💵 SITUAÇÃO FINAL:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏦 Colchão: R$ ${mes.colchao.toFixed(2)}
+
+📋 DETALHES DOS GASTOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💸 Gastos Variáveis: R$ ${(mes.totalGastos - mes.contasPagas).toFixed(2)}
+💳 Contas Pagas: R$ ${mes.contasPagas.toFixed(2)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧮 TOTAL DE GASTOS: R$ ${mes.totalGastos.toFixed(2)}
+📝 Total de Transações: ${mes.transacoes}
+
+📊 GASTOS POR CATEGORIA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${categoriasTexto}
+
+${saldoPositivo ? '🎉 Parabéns! Você teve saldo positivo!' : '⚠️ Atenção! Mais gastos que entradas.'}
+
+✅ Relatório salvo em "Meses Anteriores"!
+
+💡 Para relatório MEI, use o Sistema de Serviços.
+    `);
+}
         
         function calcularGastosPorCategoria() {
             const categorias = {};
