@@ -1112,57 +1112,93 @@
     }
     
     function registrarPagamento() {
-        if (!servicoEmEdicao) return;
-        
-        const valorNovo = parseFloat(document.getElementById('valorPagamentoNovo').value);
-        const dataPag = document.getElementById('dataPagamento').value;
-        
-        if (isNaN(valorNovo) || valorNovo <= 0) {
-            alert('❌ Valor inválido!');
-            return;
-        }
-        
-        if (!dataPag) {
-            alert('❌ Data do recebimento é obrigatória!');
-            return;
-        }
-        
-        if (valorNovo > servicoEmEdicao.valorPendente) {
-            alert(`❌ Valor maior que o pendente!\n\nPendente: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
-            return;
-        }
-        
-        const dataPagamentoFormatada = new Date(dataPag + 'T00:00:00').toLocaleDateString('pt-BR');
-        
-        const novoPagamento = {
-            id: Date.now(),
-            valor: valorNovo,
-            data: dataPagamentoFormatada,
-            hora: new Date().toLocaleTimeString('pt-BR')
-        };
-        
-        if (!servicoEmEdicao.pagamentos) {
-            servicoEmEdicao.pagamentos = [];
-        }
-        
-        servicoEmEdicao.pagamentos.push(novoPagamento);
-        servicoEmEdicao.valorPago += valorNovo;
-        servicoEmEdicao.valorPendente -= valorNovo;
-        
-        const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Restante)' : ' (Parcial)';
-        const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
-        adicionarRendaExtraNoFinanceiro(valorNovo, descricao);
-        
-        salvarDados();
-        atualizarInterface();
-        fecharModal('modalAdicionarPagamento');
-        
-        if (servicoEmEdicao.valorPendente === 0) {
-            alert(`✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n🎉 Serviço TOTALMENTE pago!`);
-        } else {
-            alert(`✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n⏳ Ainda falta: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
-        }
+    if (!servicoEmEdicao) {
+        console.error('❌ Nenhum serviço em edição');
+        return;
     }
+    
+    const valorNovo = parseFloat(document.getElementById('valorPagamentoNovo').value);
+    const dataPag = document.getElementById('dataPagamento').value;
+    
+    if (isNaN(valorNovo) || valorNovo <= 0) {
+        alert('❌ Valor inválido!');
+        return;
+    }
+    
+    if (!dataPag) {
+        alert('❌ Data do recebimento é obrigatória!');
+        return;
+    }
+    
+    if (valorNovo > servicoEmEdicao.valorPendente) {
+        alert(`❌ Valor maior que o pendente!\n\nPendente: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`);
+        return;
+    }
+    
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('💰 REGISTRANDO PAGAMENTO');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('👤 Cliente:', servicoEmEdicao.cliente);
+    console.log('🎵 Serviço:', tiposServicoNomes[servicoEmEdicao.tipo]);
+    console.log('💵 Valor:', valorNovo);
+    console.log('📅 Data:', dataPag);
+    
+    // Formatar data
+    const dataPagamentoFormatada = new Date(dataPag + 'T00:00:00').toLocaleDateString('pt-BR');
+    
+    // Criar objeto de pagamento
+    const novoPagamento = {
+        id: Date.now(),
+        valor: valorNovo,
+        data: dataPagamentoFormatada,
+        hora: new Date().toLocaleTimeString('pt-BR')
+    };
+    
+    // Adicionar pagamento ao serviço
+    if (!servicoEmEdicao.pagamentos) {
+        servicoEmEdicao.pagamentos = [];
+    }
+    servicoEmEdicao.pagamentos.push(novoPagamento);
+    
+    // Atualizar valores
+    servicoEmEdicao.valorPago += valorNovo;
+    servicoEmEdicao.valorPendente -= valorNovo;
+    
+    console.log('✅ Pagamento adicionado ao serviço');
+    console.log('📊 Valor Pago Total:', servicoEmEdicao.valorPago);
+    console.log('⏳ Valor Pendente:', servicoEmEdicao.valorPendente);
+    
+    // INTEGRAÇÃO COM SISTEMA FINANCEIRO
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔗 INICIANDO INTEGRAÇÃO COM SISTEMA FINANCEIRO');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    // Criar descrição detalhada
+    const sufixo = servicoEmEdicao.valorPendente === 0 ? ' (Pagamento Final)' : 
+                   servicoEmEdicao.valorPago === valorNovo ? ' (Sinal)' : ' (Parcial)';
+    
+    const descricao = `🎵 ${servicoEmEdicao.cliente} - ${tiposServicoNomes[servicoEmEdicao.tipo]}${sufixo}`;
+    
+    console.log('📝 Descrição:', descricao);
+    
+    // CHAMAR FUNÇÃO DE INTEGRAÇÃO
+    adicionarRendaExtraNoFinanceiro(valorNovo, descricao, dataPagamentoFormatada);
+    
+    // Salvar no sistema de serviços
+    salvarDados();
+    atualizarInterface();
+    fecharModal('modalAdicionarPagamento');
+    
+    // Mensagem de sucesso
+    const mensagemFinal = servicoEmEdicao.valorPendente === 0 
+        ? `✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n🎉 Serviço TOTALMENTE PAGO!`
+        : `✅ Pagamento registrado!\n\n💰 R$ ${valorNovo.toFixed(2)} adicionado ao Sistema Financeiro!\n\n⏳ Ainda falta: R$ ${servicoEmEdicao.valorPendente.toFixed(2)}`;
+    
+    alert(mensagemFinal);
+    
+    console.log('✅ PROCESSO COMPLETO!');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+}
     
     function filtrarServicos(filtro) {
         filtroAtual = filtro;
