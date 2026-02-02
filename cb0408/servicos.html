@@ -1361,42 +1361,96 @@
     // ==================== RELATÓRIOS ====================
     
     function exportarRelatorioMEI() {
-        const hoje = new Date();
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
-        
-        const pagamentos = [];
-        
-        estado.servicos.forEach(s => {
-            if (s.pagamentos && s.pagamentos.length > 0) {
-                s.pagamentos.forEach(p => {
-                    const dataPagamento = new Date(p.data.split('/').reverse().join('-'));
-                    if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
-                        pagamentos.push({
-                            'Data Recebimento': p.data,
-                            'Cliente': s.cliente,
-                            'Serviço': tiposServicoNomes[s.tipo],
-                            'Valor': p.valor
-                        });
-                    }
-                });
-            }
-        });
-        
-        if (pagamentos.length === 0) {
-            alert('ℹ️ Nenhum pagamento recebido neste mês!');
-            return;
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+    const nomeMes = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    
+    console.log('📄 GERANDO RELATÓRIO MEI:', nomeMes);
+    
+    const pagamentos = [];
+    
+    // Coletar todos os pagamentos do mês atual
+    estado.servicos.forEach(s => {
+        if (s.pagamentos && s.pagamentos.length > 0) {
+            s.pagamentos.forEach(p => {
+                // Parse da data (formato: DD/MM/YYYY)
+                const partesData = p.data.split('/');
+                const dataPagamento = new Date(
+                    parseInt(partesData[2]), // ano
+                    parseInt(partesData[1]) - 1, // mês (0-indexed)
+                    parseInt(partesData[0]) // dia
+                );
+                
+                // Verificar se é do mês atual
+                if (dataPagamento.getMonth() === mesAtual && 
+                    dataPagamento.getFullYear() === anoAtual) {
+                    
+                    pagamentos.push({
+                        'Data Recebimento': p.data,
+                        'Cliente': s.cliente,
+                        'Serviço': tiposServicoNomes[s.tipo],
+                        'Valor (R$)': p.valor,
+                        'Observações': s.observacoes || ''
+                    });
+                    
+                    console.log('✅ Adicionado:', s.cliente, '- R$', p.valor);
+                }
+            });
         }
-        
-        const ws = XLSX.utils.json_to_sheet(pagamentos);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Faturamento MEI");
-        
-        const mesNome = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        XLSX.writeFile(wb, `faturamento-mei-${mesNome}.xlsx`);
-        
-        alert('✅ Relatório MEI exportado!');
+    });
+    
+    if (pagamentos.length === 0) {
+        alert('ℹ️ Nenhum pagamento recebido neste mês!\n\nNão há dados para gerar o relatório MEI.');
+        console.log('⚠️ Nenhum pagamento encontrado para', nomeMes);
+        return;
     }
+    
+    // Calcular total
+    const totalFaturamento = pagamentos.reduce((sum, p) => sum + p['Valor (R$)'], 0);
+    
+    console.log('💰 Total Faturamento MEI:', totalFaturamento);
+    console.log('📊 Quantidade de pagamentos:', pagamentos.length);
+    
+    // Adicionar linha de total
+    pagamentos.push({
+        'Data Recebimento': '',
+        'Cliente': '',
+        'Serviço': '⭐ TOTAL FATURAMENTO MEI',
+        'Valor (R$)': totalFaturamento,
+        'Observações': ''
+    });
+    
+    // Criar planilha
+    const ws = XLSX.utils.json_to_sheet(pagamentos);
+    
+    // Formatar largura das colunas
+    ws['!cols'] = [
+        { wch: 18 },  // Data
+        { wch: 25 },  // Cliente
+        { wch: 40 },  // Serviço
+        { wch: 15 },  // Valor
+        { wch: 50 }   // Observações
+    ];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, nomeMes);
+    
+    // Nome do arquivo
+    const nomeArquivo = `Faturamento-MEI-${nomeMes.replace(/\s/g, '-')}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
+    
+    console.log('✅ Relatório MEI gerado:', nomeArquivo);
+    
+    alert(`✅ Relatório MEI exportado!
+
+📊 Faturamento de ${nomeMes}:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Total: R$ ${totalFaturamento.toFixed(2)}
+📝 Serviços: ${pagamentos.length - 1}
+
+📄 Arquivo baixado: ${nomeArquivo}`);
+}
     
     function backupDados() {
         const data = new Date().toISOString().split('T')[0];
