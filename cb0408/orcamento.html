@@ -1266,6 +1266,64 @@ function goToQuote() {
 
   buildQuote();
   goTo('step-quote');
+  sendToEmail();
+}
+
+async function sendToEmail() {
+  const dataFormatada = state.data ? new Date(state.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+  const kitSomLabel = { essencial:'Kit Essencial', profissional:'Kit Profissional', experience:'Kit Experience', master:'Kit Master' };
+  const kitVideoLabel = { tv1:'1x TV 65" 4K', tv2:'2x TV 65" 4K', projetor1:'1x Projetor Epson', led2x1:'Painel LED 2x1', led3x2:'Painel LED 3x2', led4x3:'Painel LED 4x3' };
+
+  const corpo = `
+NOVO LEAD — BRIEFING SPECTRUM
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+DADOS DO CLIENTE
+━━━━━━━━━━━━━━━━━━━━━━━━
+Nome: ${state.nome}
+Empresa: ${state.empresa || '—'}
+WhatsApp: ${state.telefone}
+E-mail: ${state.email}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+EVENTO
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tipo: ${state.evento || '—'}
+Data: ${dataFormatada}
+Local: ${state.local}
+Público estimado: ${state.publico} pessoas
+Diárias: ${state.diarias}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+SERVIÇOS SELECIONADOS
+━━━━━━━━━━━━━━━━━━━━━━━━
+Serviços: ${state.servicos.join(', ') || '—'}
+Kit de som: ${state.kitSom ? kitSomLabel[state.kitSom] : '—'}
+Kit de vídeo: ${state.kitVideo ? kitVideoLabel[state.kitVideo] : '—'}
+Microfonia: ${state.microfones.join(', ') || '—'}
+Obs microfonia: ${state.obsMic || '—'}
+Obs gerais: ${state.obs || '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+ESTIMATIVA GERADA: ${document.getElementById('quoteTotal').textContent}
+━━━━━━━━━━━━━━━━━━━━━━━━
+  `.trim();
+
+  try {
+    await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        access_key: '9fbf61e9-7143-4f6a-9b12-41281f893a39',
+        subject: `[Spectrum] Novo orçamento — ${state.nome} · ${dataFormatada}`,
+        from_name: 'Briefing Spectrum',
+        email: state.email,
+        message: corpo
+      })
+    });
+  } catch(e) {
+    // silencioso — não interrompe a experiência do cliente
+  }
 }
 
 function buildQuote() {
