@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spectrum Entertainment · Orçamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --dark: #111111;
+    --card: #181818;
+    --border: #222;
+    --silver: #b8b8b8;
+    --silver-light: #e0e0e0;
+    --blue: #0077ff;
+    --blue-glow: #0047a3;
+    --blue-light: #4da6ff;
+    --cyan: #00d4ff;
+    --white: #ffffff;
+    --muted: #666;
+    --success: #00c853;
+    --warning: #ffab00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--silver-light);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0,119,255,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 20% 80%, rgba(0,212,255,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* GRID BG */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,119,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,119,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .logo-mark {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    position: relative;
+  }
+
+  .logo-s {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 52px;
+    background: linear-gradient(135deg, #e0e0e0 0%, #ffffff 50%, #b0b0b0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 72px;
+    text-align: center;
+    filter: drop-shadow(0 0 20px rgba(0,119,255,0.6));
+  }
+
+  .logo-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,119,255,0.3);
+    box-shadow: 0 0 20px rgba(0,119,255,0.2), inset 0 0 20px rgba(0,119,255,0.05);
+    animation: pulse-ring 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  .brand-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 6px;
+    background: linear-gradient(90deg, #b8b8b8, #ffffff, #b8b8b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .brand-sub {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--blue);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .header-divider {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    margin: 0 auto 20px;
+  }
+
+  .header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* PROGRESS */
+  .progress-wrap {
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-bar-bg {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px rgba(0,212,255,0.5);
+  }
+
+  .progress-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: var(--blue);
+    letter-spacing: 1px;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  /* STEP */
+  .step {
+    display: none;
+    animation: stepIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .step.active { display: block; }
+
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--blue);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  .step-question {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  .step-hint {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  /* OPTION CARDS */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .options-grid.single { grid-template-columns: 1fr; }
+  .options-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  @media (max-width: 560px) {
+    .options-grid, .options-grid.three { grid-template-columns: 1fr; }
+  }
+
+  .option-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,119,255,0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .option-card:hover {
+    border-color: var(--blue);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,119,255,0.15);
+  }
+
+  .option-card:hover::before { opacity: 1; }
+
+  .option-card.selected {
+    border-color: var(--blue);
+    background: rgba(0,119,255,0.12);
+    box-shadow: 0 0 0 1px var(--blue), 0 8px 24px rgba(0,119,255,0.2);
+  }
+
+  .option-card.selected::before { opacity: 1; }
+
+  .option-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .option-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .option-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .option-price {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    color: var(--blue-light);
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .check-mark {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 0 10px rgba(0,119,255,0.6);
+  }
+
+  .check-mark svg { width: 10px; height: 10px; }
+  .option-card.selected .check-mark { opacity: 1; }
+
+  /* MULTI SELECT HINT */
+  .multi-hint {
+    font-size: 12px;
+    color: var(--blue);
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+
+  /* INPUTS */
+  .input-group {
+    margin-bottom: 18px;
+  }
+
+  .input-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--silver);
+    margin-bottom: 8px;
+    display: block;
+    text-transform: uppercase;
+  }
+
+  .input-label span {
+    color: var(--blue);
+    margin-left: 2px;
+  }
+
+  .inp {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .inp:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0,119,255,0.15);
+  }
+
+  .inp::placeholder { color: var(--muted); }
+
+  .inp-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 480px) { .inp-row { grid-template-columns: 1fr; } }
+
+  /* RANGE SLIDER */
+  .range-wrap {
+    margin-bottom: 28px;
+  }
+
+  .range-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .range-display span { color: var(--blue); }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--blue);
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(0,119,255,0.6);
+    border: 2px solid var(--white);
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* BUTTONS */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .btn {
+    padding: 14px 28px;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue), var(--blue-glow));
+    color: var(--white);
+    box-shadow: 0 4px 20px rgba(0,119,255,0.35);
+    flex: 1;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,119,255,0.5);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-back {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-back:hover {
+    border-color: var(--silver);
+    color: var(--silver);
+  }
+
+  /* TEXTAREA */
+  textarea.inp {
+    resize: vertical;
+    min-height: 90px;
+    font-size: 15px;
+  }
+
+  /* SUMMARY / QUOTE */
+  .quote-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .quote-header {
+    background: linear-gradient(135deg, rgba(0,119,255,0.15), rgba(0,71,163,0.1));
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .quote-header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--blue-light);
+  }
+
+  .quote-id {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .quote-body { padding: 24px; }
+
+  .quote-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .quote-line:last-child { border-bottom: none; }
+
+  .quote-item-name {
+    font-size: 15px;
+    color: var(--silver-light);
+    flex: 1;
+  }
+
+  .quote-item-detail {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .quote-item-price {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    color: var(--white);
+    text-align: right;
+    margin-left: 16px;
+  }
+
+  .quote-total-row {
+    background: rgba(0,119,255,0.1);
+    border: 1px solid rgba(0,119,255,0.2);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .quote-total-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--silver);
+  }
+
+  .quote-total-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--blue-light), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0,212,255,0.3));
+  }
+
+  .quote-disclaimer {
+    background: rgba(255,171,0,0.08);
+    border: 1px solid rgba(255,171,0,0.2);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--warning);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .quote-disclaimer strong { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 1px; }
+
+  .contact-summary {
+    background: rgba(0,200,83,0.06);
+    border: 1px solid rgba(0,200,83,0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+
+  .contact-summary-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--success);
+    margin-bottom: 10px;
+  }
+
+  .contact-summary-data {
+    font-size: 14px;
+    color: var(--silver-light);
+    line-height: 1.8;
+  }
+
+  .btn-whatsapp {
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    color: var(--white);
+    box-shadow: 0 4px 20px rgba(37,211,102,0.3);
+    width: 100%;
+    padding: 16px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+
+  .btn-whatsapp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(37,211,102,0.4);
+  }
+
+  /* TERCEIRO TAG */
+  .third-party-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,171,0,0.1);
+    border: 1px solid rgba(255,171,0,0.25);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--warning);
+    letter-spacing: 1px;
+    font-family: 'Orbitron', sans-serif;
+    margin-top: 6px;
+  }
+
+  /* SEPARATOR */
+  .sep {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 28px 0;
+  }
+
+  /* TEXTAREA SECTION */
+  .obs-section { margin-bottom: 24px; }
+
+  /* INLINE CHIP */
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--silver);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .chip:hover { border-color: var(--blue); color: var(--white); }
+  .chip.selected { background: rgba(0,119,255,0.15); border-color: var(--blue); color: var(--blue-light); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-mark">
+      <div class="logo-ring"></div>
+      <div class="logo-s">S</div>
+    </div>
+    <div class="brand-name">SPECTRUM</div>
+    <div class="brand-sub">— Entertainment —</div>
+    <div class="header-divider"></div>
+    <div class="header-title">Briefing de Orçamento</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill" style="width: 10%"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">ETAPA 1</div>
+  </div>
+
+  <!-- ===================== STEP 1: CONTATO ===================== -->
+  <div class="step active" id="step-1">
+    <div class="section-label">Identificação</div>
+    <div class="step-question">Antes de começar, nos diga quem você é.</div>
+    <div class="step-hint">Seus dados ficam conosco. Usaremos apenas para enviar sua proposta.</div>
+
+    <div class="inp-row">
+      <div class="input-group">
+        <label class="input-label">Nome completo <span>*</span></label>
+        <input class="inp" type="text" id="nome" placeholder="João Silva">
+      </div>
+      <div class="input-group">
+        <label class="input-label">WhatsApp <span>*</span></label>
+        <input class="inp" type="tel" id="telefone" placeholder="(11) 99999-9999">
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">E-mail <span>*</span></label>
+      <input class="inp" type="email" id="email" placeholder="joao@email.com">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Empresa / Estabelecimento</label>
+      <input class="inp" type="text" id="empresa" placeholder="Nome do bar, empresa, evento...">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextFromContact()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 2: TIPO DE EVENTO ===================== -->
+  <div class="step" id="step-2">
+    <div class="section-label">Tipo de Evento</div>
+    <div class="step-question">Que tipo de evento você está produzindo?</div>
+    <div class="step-hint">Isso define a rota do seu orçamento.</div>
+
+    <div class="options-grid">
+      <div class="option-card" onclick="selectOption(this, 'evento', 'show'); nextStep('step-3-show')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎤</span>
+        <div class="option-title">Show / Festa</div>
+        <div class="option-desc">Evento musical, festa particular, balada, show de artista</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'evento', 'corporativo'); nextStep('step-3-corp')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🏢</span>
+        <div class="option-title">Corporativo</div>
+        <div class="option-desc">Palestras, premiações, confraternizações, feiras, lançamentos</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'evento', 'bar'); nextStep('step-3-bar')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🍺</span>
+        <div class="option-title">Bar / Restaurante</div>
+        <div class="option-desc">Telão para jogos, Copa do Mundo, transmissão ao vivo</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'evento', 'cultural'); nextStep('step-3-show')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎭</span>
+        <div class="option-title">Cultural / Público</div>
+        <div class="option-desc">Batalhas, saraus, apresentações de rua, eventos comunitários</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 3 SHOW: SERVIÇOS ===================== -->
+  <div class="step" id="step-3-show">
+    <div class="section-label">Serviços</div>
+    <div class="step-question">O que você vai precisar?</div>
+    <div class="multi-hint">✦ Selecione todos que precisar</div>
+
+    <div class="options-grid">
+      <div class="option-card multi" onclick="toggleMulti(this, 'som')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🔊</span>
+        <div class="option-title">Sonorização</div>
+        <div class="option-desc">Caixas, subwoofer, mesa, microfones</div>
+        <div class="option-price">a partir de R$ 600</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'iluminacao')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">💡</span>
+        <div class="option-title">Iluminação</div>
+        <div class="option-desc">Moving heads, par LEDs, strobo, canhão</div>
+        <div class="option-price">sob consulta</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'video')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">📽️</span>
+        <div class="option-title">Vídeo / LED</div>
+        <div class="option-desc">Painel LED, projetor, telão</div>
+        <div class="option-price">a partir de R$ 1.799</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'cobertura')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎥</span>
+        <div class="option-title">Cobertura AV</div>
+        <div class="option-desc">Filmagem, foto, transmissão ao vivo</div>
+        <div class="option-price">sob consulta</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goBack()">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextFromServicos('show')">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 3 CORP ===================== -->
+  <div class="step" id="step-3-corp">
+    <div class="section-label">Serviços</div>
+    <div class="step-question">O que você vai precisar?</div>
+    <div class="multi-hint">✦ Selecione todos que precisar</div>
+
+    <div class="options-grid">
+      <div class="option-card multi" onclick="toggleMulti(this, 'som')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🔊</span>
+        <div class="option-title">Sonorização</div>
+        <div class="option-desc">Caixas, mesa, microfones com fio ou sem fio</div>
+        <div class="option-price">a partir de R$ 600</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'video')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">📺</span>
+        <div class="option-title">Exibição / Vídeo</div>
+        <div class="option-desc">TV 65" 4K, projetor, painel LED para apresentações</div>
+        <div class="option-price">a partir de R$ 899</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'cobertura')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎥</span>
+        <div class="option-title">Cobertura AV</div>
+        <div class="option-desc">Filmagem corporativa, fotos do evento</div>
+        <div class="option-price">sob consulta</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'iluminacao')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">💡</span>
+        <div class="option-title">Iluminação</div>
+        <div class="option-desc">Iluminação cênica para palco e espaço</div>
+        <div class="option-price">sob consulta</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goBack()">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextFromServicos('corp')">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 3 BAR ===================== -->
+  <div class="step" id="step-3-bar">
+    <div class="section-label">Copa do Mundo 2026 · Bar & Restaurante</div>
+    <div class="step-question">O que você precisa para a transmissão?</div>
+    <div class="multi-hint">✦ Selecione todos que precisar</div>
+
+    <div class="options-grid">
+      <div class="option-card multi" onclick="toggleMulti(this, 'tv')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">📺</span>
+        <div class="option-title">TV 65" 4K</div>
+        <div class="option-desc">Alta definição para ambientes fechados</div>
+        <div class="option-price">a partir de R$ 699,90/un</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'projetor')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎞️</span>
+        <div class="option-title">Projetor Epson</div>
+        <div class="option-desc">Alta luminosidade, ideal para telão</div>
+        <div class="option-price">a partir de R$ 1.659,90/un</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'led')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🖥️</span>
+        <div class="option-title">Painel LED HD</div>
+        <div class="option-desc">Impacto máximo para grandes espaços</div>
+        <div class="option-price">a partir de R$ 1.799,90</div>
+      </div>
+      <div class="option-card multi" onclick="toggleMulti(this, 'som')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🔊</span>
+        <div class="option-title">Sonorização</div>
+        <div class="option-desc">Som ambiente + narração dos jogos</div>
+        <div class="option-price">a partir de R$ 600</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goBack()">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextFromServicos('bar')">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 4: SOM DETALHES ===================== -->
+  <div class="step" id="step-4-som">
+    <div class="section-label">Sonorização · Detalhes</div>
+    <div class="step-question">Qual o porte do evento para o som?</div>
+    <div class="step-hint">Isso define qual kit de sonorização é adequado.</div>
+
+    <div class="options-grid">
+      <div class="option-card" onclick="selectOption(this, 'kitSom', 'essencial')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">👥</span>
+        <div class="option-title">Kit Essencial</div>
+        <div class="option-desc">Até 150 pessoas — 2x Yamaha DXR12 + Mesa 6Ch</div>
+        <div class="option-price">R$ 600,00</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitSom', 'profissional')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎶</span>
+        <div class="option-title">Kit Profissional</div>
+        <div class="option-desc">Até 300 pessoas — 2x Antera TS700AX + Mesa 6Ch</div>
+        <div class="option-price">R$ 800,00</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitSom', 'experience')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">⚡</span>
+        <div class="option-title">Kit Experience</div>
+        <div class="option-desc">Até 500 pessoas — Multi-caixas + Mesa Digital X18</div>
+        <div class="option-price">sob consulta</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitSom', 'master')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🔥</span>
+        <div class="option-title">Kit Master</div>
+        <div class="option-desc">Até 800 pessoas — Full setup + Sub Antera LF18</div>
+        <div class="option-price">sob consulta</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top: 8px">Microfonia</div>
+    <div class="step-hint" style="margin-bottom: 16px">Vai precisar de microfones?</div>
+    <div class="chip-row" id="mic-chips">
+      <div class="chip" onclick="toggleChip(this, 'mic_sem_fio')">🎙️ Sem fio</div>
+      <div class="chip" onclick="toggleChip(this, 'mic_dinamicos')">🎤 Microfones dinâmicos</div>
+      <div class="chip" onclick="toggleChip(this, 'mic_bateria')">🥁 Kit bateria</div>
+      <div class="chip" onclick="toggleChip(this, 'mic_inear')">👂 In-ear monitor</div>
+      <div class="chip" onclick="toggleChip(this, 'mic_nenhum')">❌ Não precisarei</div>
+    </div>
+
+    <div class="obs-section">
+      <label class="input-label">Observações sobre microfonia</label>
+      <textarea class="inp" id="obsMic" placeholder="Ex: preciso de 2 microfones para palestrantes, suporte para bateria acústica..."></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goBack()">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextFromSom()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 4: VIDEO DETALHES ===================== -->
+  <div class="step" id="step-4-video">
+    <div class="section-label">Vídeo / Display · Detalhes</div>
+    <div class="step-question">Qual solução de vídeo você precisa?</div>
+
+    <div class="options-grid">
+      <div class="option-card" onclick="selectOption(this, 'kitVideo', 'tv1')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">📺</span>
+        <div class="option-title">1x TV 65" 4K</div>
+        <div class="option-desc">Ideal para ambientes menores</div>
+        <div class="option-price">R$ 899,90</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitVideo', 'tv2')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">📺📺</span>
+        <div class="option-title">2x TV 65" 4K</div>
+        <div class="option-desc">Cobertura de dois pontos de visão</div>
+        <div class="option-price">R$ 1.599,80</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitVideo', 'projetor1')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🎞️</span>
+        <div class="option-title">1x Projetor Epson</div>
+        <div class="option-desc">Telão de alto impacto</div>
+        <div class="option-price">R$ 1.999,90</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitVideo', 'led2x1')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🖥️</span>
+        <div class="option-title">Painel LED 2x1</div>
+        <div class="option-desc">2m² — máximo impacto visual</div>
+        <div class="option-price">R$ 1.799,90</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitVideo', 'led3x2')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🖥️</span>
+        <div class="option-title">Painel LED 3x2</div>
+        <div class="option-desc">6m² — grandes áreas</div>
+        <div class="option-price">R$ 3.499,90</div>
+      </div>
+      <div class="option-card" onclick="selectOption(this, 'kitVideo', 'led4x3')">
+        <div class="check-mark"><svg viewBox="0 0 12 10" fill="none"><polyline points="1,5 4,8 11,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="option-icon">🖥️</span>
+        <div class="option-title">Painel LED 4x3</div>
+        <div class="option-desc">12m² — shows e eventos de grande porte</div>
+        <div class="option-price">R$ 8.999,90</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goBack()">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextFromVideo()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 5: DATAS ===================== -->
+  <div class="step" id="step-5-data">
+    <div class="section-label">Logística</div>
+    <div class="step-question">Quando e onde será o evento?</div>
+
+    <div class="inp-row">
+      <div class="input-group">
+        <label class="input-label">Data do evento <span>*</span></label>
+        <input class="inp" type="date" id="dataEvento">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Número de diárias</label>
+        <select class="inp" id="diarias" onchange="updateDiscount()">
+          <option value="1">1 diária</option>
+          <option value="2">2 diárias (6% OFF)</option>
+          <option value="3">3 diárias (8% OFF)</option>
+          <option value="4">4+ diárias (10% OFF)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Local / Cidade <span>*</span></label>
+      <input class="inp" type="text" id="local" placeholder="Ex: São Bernardo do Campo, ABC Paulista">
+    </div>
+
+    <div class="range-wrap">
+      <label class="input-label">Estimativa de público</label>
+      <div class="range-display"><span id="publicoVal">200</span> pessoas</div>
+      <input type="range" min="50" max="2000" step="50" value="200" oninput="document.getElementById('publicoVal').textContent=this.value; state.publico=parseInt(this.value)">
+      <div class="range-labels"><span>50</span><span>500</span><span>1000</span><span>2000+</span></div>
+    </div>
+
+    <div class="obs-section">
+      <label class="input-label">Observações adicionais</label>
+      <textarea class="inp" id="obs" placeholder="Informações sobre o local, necessidades específicas, tema do evento..."></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="goBack()">← Voltar</button>
+      <button class="btn btn-primary" onclick="goToQuote()">Ver Estimativa →</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP FINAL: ORÇAMENTO ===================== -->
+  <div class="step" id="step-quote">
+    <div class="section-label">Estimativa Gerada</div>
+    <div class="step-question">Aqui está sua estimativa prévia.</div>
+    <div class="step-hint">Valores baseados nos nossos catálogos. Proposta oficial enviada em até 24h.</div>
+
+    <div class="contact-summary">
+      <div class="contact-summary-title">✓ Dados recebidos</div>
+      <div class="contact-summary-data" id="contactSummaryText"></div>
+    </div>
+
+    <div class="quote-card">
+      <div class="quote-header">
+        <div class="quote-header-title">DETALHAMENTO DO ORÇAMENTO</div>
+        <div class="quote-id" id="quoteId"></div>
+      </div>
+      <div class="quote-body" id="quoteBody"></div>
+    </div>
+
+    <div class="quote-total-row">
+      <div class="quote-total-label">ESTIMATIVA TOTAL</div>
+      <div class="quote-total-value" id="quoteTotal"></div>
+    </div>
+
+    <div class="quote-disclaimer" id="quoteDisclaimer">
+      <strong>⚠ Atenção</strong><br>
+      Esta é uma estimativa baseada nas suas respostas. Serviços com parceiros terceiros são sob consulta e não estão incluídos no total. A proposta oficial, com valores exatos e condições, será enviada pela equipe Spectrum em até 24h.
+    </div>
+
+    <a id="whatsappBtn" href="#" class="btn-whatsapp" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.533 5.854L.057 23.998l6.304-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.012-1.376l-.36-.214-3.737.98.998-3.648-.235-.374A9.793 9.793 0 012.182 12c0-5.42 4.398-9.818 9.818-9.818 5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+      Confirmar pelo WhatsApp
+    </a>
+
+    <div style="text-align:center; margin-top: 20px">
+      <button class="btn btn-back" style="font-size:10px" onclick="resetForm()">← Novo orçamento</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const state = {
+  evento: null,
+  servicos: [],
+  kitSom: null,
+  kitVideo: null,
+  microfones: [],
+  diarias: 1,
+  publico: 200,
+  route: null
+};
+
+const prices = {
+  som: { essencial: 600, profissional: 800, experience: null, master: null },
+  video: {
+    tv1: 899.90, tv2: 1599.80,
+    projetor1: 1999.90, led2x1: 1799.90,
+    led3x2: 3499.90, led4x3: 8999.90
+  },
+  mic: {
+    mic_sem_fio: 250, mic_dinamicos: 300,
+    mic_bateria: 500, mic_inear: 200
+  }
+};
+
+const discounts = { 1: 0, 2: 0.06, 3: 0.08, 4: 0.10 };
+
+let history = [];
+
+function stepId() {
+  return document.querySelector('.step.active').id;
+}
+
+function goTo(id) {
+  const cur = document.querySelector('.step.active');
+  if (cur) { history.push(cur.id); cur.classList.remove('active'); }
+  document.getElementById(id).classList.add('active');
+  updateProgress(id);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  if (!history.length) return;
+  const prev = history.pop();
+  const cur = document.querySelector('.step.active');
+  if (cur) cur.classList.remove('active');
+  document.getElementById(prev).classList.add('active');
+  updateProgress(prev);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const stepOrder = ['step-1','step-2','step-3-show','step-3-corp','step-3-bar',
+  'step-4-som','step-4-video','step-5-data','step-quote'];
+
+function updateProgress(id) {
+  const idx = stepOrder.indexOf(id);
+  const pct = Math.max(10, Math.round(((idx + 1) / (stepOrder.length)) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = 'ETAPA ' + (idx + 1);
+}
+
+function nextFromContact() {
+  const nome = document.getElementById('nome').value.trim();
+  const tel = document.getElementById('telefone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  if (!nome || !tel || !email) {
+    alert('Por favor, preencha nome, WhatsApp e e-mail para continuar.');
+    return;
+  }
+  state.nome = nome;
+  state.telefone = tel;
+  state.email = email;
+  state.empresa = document.getElementById('empresa').value.trim();
+  goTo('step-2');
+}
+
+function nextStep(id) {
+  goTo(id);
+}
+
+function selectOption(el, key, val) {
+  el.closest('.options-grid').querySelectorAll('.option-card:not(.multi)')
+    .forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state[key] = val;
+}
+
+function toggleMulti(el, val) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    if (!state.servicos.includes(val)) state.servicos.push(val);
+  } else {
+    state.servicos = state.servicos.filter(v => v !== val);
+  }
+}
+
+function toggleChip(el, val) {
+  el.classList.toggle('selected');
+  if (val === 'mic_nenhum') {
+    document.querySelectorAll('#mic-chips .chip').forEach(c => {
+      if (c !== el) c.classList.remove('selected');
+    });
+    state.microfones = el.classList.contains('selected') ? [] : state.microfones;
+  } else {
+    document.querySelectorAll('#mic-chips .chip[onclick*="mic_nenhum"]')[0].classList.remove('selected');
+    if (el.classList.contains('selected')) {
+      if (!state.microfones.includes(val)) state.microfones.push(val);
+    } else {
+      state.microfones = state.microfones.filter(v => v !== val);
+    }
+  }
+}
+
+function nextFromServicos(route) {
+  if (!state.servicos.length) {
+    alert('Selecione ao menos um serviço para continuar.');
+    return;
+  }
+  state.route = route;
+
+  if (state.servicos.includes('som')) {
+    goTo('step-4-som');
+  } else if (state.servicos.some(s => ['video','tv','projetor','led'].includes(s))) {
+    goTo('step-4-video');
+  } else {
+    goTo('step-5-data');
+  }
+}
+
+function nextFromSom() {
+  if (!state.kitSom) {
+    alert('Selecione um kit de sonorização.');
+    return;
+  }
+  if (state.servicos.some(s => ['video','tv','projetor','led'].includes(s))) {
+    goTo('step-4-video');
+  } else {
+    goTo('step-5-data');
+  }
+}
+
+function nextFromVideo() {
+  if (!state.kitVideo) {
+    alert('Selecione uma opção de vídeo.');
+    return;
+  }
+  goTo('step-5-data');
+}
+
+function updateDiscount() {
+  state.diarias = parseInt(document.getElementById('diarias').value);
+}
+
+function genQuoteId() {
+  return 'SPX-' + Date.now().toString(36).toUpperCase().slice(-6);
+}
+
+function goToQuote() {
+  const data = document.getElementById('dataEvento').value;
+  const local = document.getElementById('local').value.trim();
+  if (!data || !local) {
+    alert('Por favor, preencha a data e o local do evento.');
+    return;
+  }
+  state.data = data;
+  state.local = local;
+  state.obsMic = document.getElementById('obsMic') ? document.getElementById('obsMic').value.trim() : '';
+  state.obs = document.getElementById('obs').value.trim();
+  state.diarias = parseInt(document.getElementById('diarias').value);
+
+  buildQuote();
+  goTo('step-quote');
+}
+
+function buildQuote() {
+  const discount = discounts[state.diarias] || 0;
+  let lines = [];
+  let total = 0;
+  let hasConsulta = false;
+
+  if (state.kitSom) {
+    const price = prices.som[state.kitSom];
+    const names = { essencial:'Kit Essencial de Sonorização', profissional:'Kit Profissional de Sonorização', experience:'Kit Experience', master:'Kit Master' };
+    const details = { essencial:'2x Yamaha DXR12 + Mesa 6Ch + Cabeamento', profissional:'2x Antera TS700AX + Mesa 6Ch + Cabeamento', experience:'Multi-caixas + Mesa Digital Behringer X18', master:'Full setup + Sub Antera LF18 + Mesa X18' };
+    if (price) {
+      const subtotal = price * state.diarias;
+      const disc = subtotal * discount;
+      lines.push({ name: names[state.kitSom], detail: details[state.kitSom], price: subtotal - disc });
+      total += subtotal - disc;
+    } else {
+      lines.push({ name: names[state.kitSom], detail: details[state.kitSom], price: null });
+      hasConsulta = true;
+    }
+  }
+
+  state.microfones.forEach(m => {
+    const micNames = { mic_sem_fio:'Kit Microfone Sem Fio', mic_dinamicos:'Kit 5x Microfones Dinâmicos', mic_bateria:'Kit Microfone Bateria', mic_inear:'Monitor In-ear AMW PWM100' };
+    const p = prices.mic[m];
+    if (p) { const sub = p * state.diarias; const d = sub * discount; lines.push({ name: micNames[m], detail:'Microfonia', price: sub - d }); total += sub - d; }
+  });
+
+  if (state.kitVideo) {
+    const vp = prices.video[state.kitVideo];
+    const vnames = { tv1:'1x TV 65" 4K HDR', tv2:'2x TV 65" 4K HDR', projetor1:'1x Projetor Epson Professional', led2x1:'Painel LED HD 2x1 (2m²)', led3x2:'Painel LED HD 3x2 (6m²)', led4x3:'Painel LED HD 4x3 (12m²)' };
+    const sub = vp * state.diarias;
+    const d = sub * discount;
+    lines.push({ name: vnames[state.kitVideo], detail:'Locação com entrega e montagem', price: sub - d });
+    total += sub - d;
+  }
+
+  if (state.servicos.includes('iluminacao')) {
+    lines.push({ name: 'Iluminação Profissional', detail: 'Via parceiro — orçamento personalizado', price: null });
+    hasConsulta = true;
+  }
+
+  if (state.servicos.includes('cobertura')) {
+    lines.push({ name: 'Cobertura Audiovisual', detail: 'Via parceiro — orçamento personalizado', price: null });
+    hasConsulta = true;
+  }
+
+  // Render lines
+  let html = '';
+  lines.forEach(l => {
+    html += `<div class="quote-line">
+      <div><div class="quote-item-name">${l.name}</div><div class="quote-item-detail">${l.detail}</div></div>
+      <div class="quote-item-price">${l.price ? 'R$ ' + l.price.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'}</div>
+    </div>`;
+  });
+
+  if (discount > 0) {
+    html += `<div class="quote-line" style="color: #00c853">
+      <div><div class="quote-item-name" style="color:#00c853">Desconto por período</div><div class="quote-item-detail">${state.diarias} diária${state.diarias>1?'s':''} · ${(discount*100).toFixed(0)}% OFF</div></div>
+      <div class="quote-item-price" style="color:#00c853">incluído</div>
+    </div>`;
+  }
+
+  document.getElementById('quoteBody').innerHTML = html;
+  document.getElementById('quoteId').textContent = genQuoteId();
+  document.getElementById('quoteTotal').textContent = total ? 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : 'sob consulta';
+
+  if (!hasConsulta) {
+    document.getElementById('quoteDisclaimer').innerHTML = '<strong>⚠ Atenção</strong><br>Esta é uma estimativa prévia com base nas suas seleções. Valores sujeitos a confirmação pela equipe. Proposta oficial enviada em até 24h.';
+  }
+
+  const dataFormatada = state.data ? new Date(state.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+  document.getElementById('contactSummaryText').innerHTML =
+    `<strong>${state.nome}</strong>${state.empresa ? ' · ' + state.empresa : ''}<br>
+    📱 ${state.telefone} &nbsp;|&nbsp; ✉ ${state.email}<br>
+    📅 ${dataFormatada} &nbsp;|&nbsp; 📍 ${state.local}`;
+
+  const servicosList = lines.map(l => l.name).join(', ');
+  const msg = encodeURIComponent(
+    `Olá, Spectrum! Acabei de preencher o briefing online.\n\n` +
+    `*Nome:* ${state.nome}\n*Empresa:* ${state.empresa || '—'}\n*WhatsApp:* ${state.telefone}\n*Email:* ${state.email}\n\n` +
+    `*Evento:* ${dataFormatada} · ${state.local}\n*Público estimado:* ${state.publico} pessoas\n*Diárias:* ${state.diarias}\n\n` +
+    `*Serviços:* ${servicosList}\n\n` +
+    `*Estimativa:* ${total ? 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits:2}) : 'sob consulta'}\n\n` +
+    (state.obsMic ? `*Obs microfonia:* ${state.obsMic}\n` : '') +
+    (state.obs ? `*Obs gerais:* ${state.obs}\n\n` : '') +
+    `Aguardo o contato! 🎤`
+  );
+  document.getElementById('whatsappBtn').href = `https://wa.me/5511999391011?text=${msg}`;
+}
+
+function resetForm() {
+  Object.assign(state, { evento:null, servicos:[], kitSom:null, kitVideo:null, microfones:[], diarias:1, publico:200, route:null });
+  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  history = [];
+  goTo('step-1');
+}
+</script>
+</body>
+</html>
